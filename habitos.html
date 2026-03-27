@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meus Habitos</title>
+<style>
+  :root {
+    --bg:#111314;--bg2:#1a1d1f;--bg3:#222628;
+    --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+    --green:#22c55e;--green-dim:rgba(34,197,94,0.12);--green-dim2:rgba(34,197,94,0.2);
+    --text:#f0f0f0;--text2:#9ca3af;--text3:#6b7280;
+    --red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;--orange:#f97316;
+    --gold:#d4a017;--gold-dim:rgba(212,160,23,0.12);
+    --purple:#8b5cf6;--purple-dim:rgba(139,92,246,0.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;}
+  .app{max-width:600px;margin:0 auto;padding:0 1rem 1.5rem;}
+
+  /* ===== TOP NAV (app switcher) ===== */
+  .app-nav{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.25rem;padding-top:1rem;position:sticky;top:0;background:var(--bg);z-index:100;}
+  .app-nav-btn{flex:1;padding:12px 8px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--text3);text-align:center;transition:all .15s;border-bottom:2px solid transparent;}
+  .app-nav-btn.active{color:var(--green);border-bottom-color:var(--green);font-weight:600;}
+  .app-nav-btn:hover:not(.active){color:var(--text2);}
+
+  /* ===== SHARED ===== */
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px;}
+  .header h1{font-size:22px;font-weight:600;}
+  .header-sub{font-size:12px;color:var(--text3);}
+  .date-nav{display:flex;align-items:center;gap:6px;}
+  .date-nav button{background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;padding:5px 14px;cursor:pointer;font-size:15px;color:var(--text2);}
+  .date-nav button:hover{border-color:var(--green);color:var(--green);}
+  .date-label{font-size:13px;font-weight:500;min-width:160px;text-align:center;}
+  .tabs{display:flex;gap:2px;margin-bottom:1.25rem;background:var(--bg2);border-radius:10px;padding:3px;}
+  .tab{flex:1;padding:8px;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--text2);border-radius:8px;text-align:center;transition:all .15s;}
+  .tab.active{background:var(--green);color:#fff;font-weight:600;}
+  .section{margin-bottom:1rem;}
+  .stitle{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+  .card{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:4px;}
+
+  /* ===== HABITOS - items ===== */
+  .hi{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background .1s;}
+  .hi:last-child{border-bottom:none;}
+  .hi:hover{background:var(--bg3);}
+  .hi.done{opacity:.5;}
+  .hi.disabled{cursor:default;opacity:.28;}
+  .hi.disabled:hover{background:transparent;}
+  .cb{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+  .cb.checked{background:var(--green);border-color:var(--green);}
+  .cb.checked-bad{background:var(--orange);border-color:var(--orange);border-radius:5px!important;}
+  .ck{width:10px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px);display:none;}
+  .cb.checked .ck,.cb.checked-bad .ck{display:block;}
+  .hicon{font-size:18px;width:22px;text-align:center;flex-shrink:0;}
+  .hname{font-size:15px;flex:1;}
+  .hi.done .hname{text-decoration:line-through;color:var(--text3);}
+  .off-b{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--bg3);color:var(--text3);border:0.5px solid var(--border);}
+  .bad-b{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;}
+  .bad-b.nao{background:var(--bg3);color:var(--text3);}
+  .bad-b.sim{background:rgba(249,115,22,.15);color:var(--orange);}
+
+  /* ===== HABITOS - progress ===== */
+  .prog{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:1rem;}
+  .prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .prog-lbl{font-size:13px;color:var(--text2);}
+  .prog-pct{font-size:22px;font-weight:700;color:var(--green);}
+  .prog-track{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+  .prog-fill{height:100%;border-radius:4px;background:var(--green);transition:width .4s;}
+
+  /* ===== HABITOS - agua ===== */
+  .agua-w{padding:13px 14px;border-bottom:0.5px solid var(--border);}
+  .agua-top{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .agua-info{flex:1;}
+  .agua-name{font-size:15px;}
+  .agua-ml{font-size:12px;color:var(--text3);margin-top:2px;}
+  .agua-ok-b{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--green-dim);color:var(--green);font-weight:600;}
+  .agua-track{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:10px;}
+  .agua-fill{height:100%;border-radius:3px;background:var(--blue);transition:width .3s;}
+  .agua-btns{display:flex;gap:6px;}
+  .agua-btn{flex:1;padding:8px 0;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);transition:all .1s;}
+  .agua-btn:hover{border-color:var(--blue);color:var(--blue);}
+  .agua-btn.m{color:var(--text3);}
+
+  /* ===== HABITOS - youtube ===== */
+  .canal-w{padding:13px 14px;}
+  .canal-top{display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer;}
+  .canal-info{flex:1;}
+  .canal-name{font-size:15px;}
+  .canal-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+  .hr-row{display:flex;align-items:center;gap:8px;}
+  .hr-lbl{font-size:12px;color:var(--text3);white-space:nowrap;}
+  .hr-btns{display:flex;gap:4px;flex:1;}
+  .hr-btn{flex:1;padding:7px 0;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:12px;color:var(--text);transition:all .1s;}
+  .hr-btn:hover{border-color:var(--green);color:var(--green);}
+  .hr-btn.m{color:var(--text3);}
+  .hr-disp{font-size:17px;font-weight:600;color:var(--green);min-width:55px;text-align:right;}
+  .yt-s{font-size:11px;color:var(--green);background:var(--green-dim);border-radius:20px;padding:2px 9px;margin-left:auto;}
+  .yt-s strong{font-weight:600;}
+
+  /* ===== HABITOS - calorias ===== */
+  .cal-w{padding:13px 14px;}
+  .cal-top{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .cal-info{flex:1;}
+  .cal-name{font-size:15px;}
+  .cal-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+  .cal-big{font-size:24px;font-weight:700;color:var(--orange);}
+  .cal-unit{font-size:12px;color:var(--text3);}
+  .cal-row{display:flex;gap:5px;margin-bottom:8px;}
+  .cal-btn{flex:1;padding:7px 0;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:12px;color:var(--text);transition:all .1s;}
+  .cal-btn:hover{border-color:var(--orange);color:var(--orange);}
+  .cal-btn.m{color:var(--text3);}
+  .cal-inp{width:100%;padding:8px 12px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:14px;color:var(--text);text-align:center;}
+  .cal-inp:focus{outline:none;border-color:var(--orange);}
+
+  /* ===== HABITOS - sono ===== */
+  .sono-w{padding:13px 14px;}
+  .sono-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .sono-info{flex:1;}
+  .sono-name{font-size:15px;}
+  .sono-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+  .sono-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .sono-field{display:flex;flex-direction:column;gap:4px;}
+  .sono-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+  .sono-inp{padding:9px 10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:15px;color:var(--text);text-align:center;width:100%;}
+  .sono-inp:focus{outline:none;border-color:var(--green);}
+  .sono-res{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--text3);}
+  .sono-h{font-size:22px;font-weight:600;color:var(--text);}
+  .sono-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;}
+  .sono-badge.bom{background:var(--green-dim);color:var(--green);}
+  .sono-badge.ok{background:rgba(245,158,11,.15);color:var(--amber);}
+  .sono-badge.ruim{background:rgba(239,68,68,.15);color:var(--red);}
+
+  /* ===== HABITOS - import/modal ===== */
+  .import-box{background:var(--bg2);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px;margin-bottom:12px;}
+  .import-title{font-size:12px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  .import-hint{font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;}
+  .import-ta{width:100%;padding:9px 12px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:13px;color:var(--text);resize:none;font-family:monospace;line-height:1.5;}
+  .import-ta:focus{outline:none;border-color:var(--green);}
+  .import-btn{width:100%;margin-top:8px;padding:10px;border:none;border-radius:8px;background:var(--green);cursor:pointer;font-size:14px;font-weight:600;color:#fff;}
+  .import-btn:hover{opacity:.9;}
+  .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;padding:1rem;}
+  .modal-ov.show{display:flex;}
+  .modal{background:var(--bg2);border:0.5px solid var(--border2);border-radius:14px;padding:22px;width:100%;max-width:400px;}
+  .modal-title{font-size:17px;font-weight:600;margin-bottom:4px;}
+  .modal-sub{font-size:12px;color:var(--text3);margin-bottom:14px;}
+  .modal-desc{font-size:14px;color:var(--text2);font-style:italic;margin-bottom:14px;padding:9px 12px;background:var(--bg3);border-radius:8px;line-height:1.4;}
+  .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .modal-f{display:flex;flex-direction:column;gap:5px;}
+  .modal-lbl{font-size:11px;color:var(--text3);font-weight:600;}
+  .modal-inp{padding:10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:16px;color:var(--text);text-align:center;width:100%;font-weight:700;}
+  .modal-inp:focus{outline:none;border-color:var(--green);}
+  .modal-inp.kcal{color:var(--orange);}
+  .modal-inp.prot{color:var(--green);}
+  .modal-inp.carb{color:var(--amber);}
+  .modal-inp.gord{color:var(--blue);}
+  .modal-btns{display:flex;gap:8px;}
+  .modal-cancel{flex:1;padding:11px;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:14px;color:var(--text2);}
+  .modal-confirm{flex:2;padding:11px;border:none;border-radius:8px;background:var(--green);cursor:pointer;font-size:14px;font-weight:700;color:#fff;}
+
+  /* ===== HABITOS - refeicoes ===== */
+  .ref-b{border-bottom:0.5px solid var(--border);}
+  .ref-b:last-child{border-bottom:none;}
+  .ref-hdr{display:flex;align-items:center;gap:8px;padding:11px 14px 7px;}
+  .ref-hdr-icon{font-size:15px;}
+  .ref-hdr-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;flex:1;}
+  .ref-add-btn{background:transparent;border:0.5px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text3);}
+  .ref-add-btn:hover{border-color:var(--green);color:var(--green);}
+  .ref-entrada{padding:8px 14px 12px;border-top:0.5px solid var(--border);}
+  .ref-ta{width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:13px;color:var(--text);resize:none;font-family:inherit;line-height:1.4;}
+  .ref-ta:focus{outline:none;border-color:var(--green);}
+  .ref-mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .ref-mf{display:flex;flex-direction:column;gap:4px;}
+  .ref-ml{font-size:10px;color:var(--text3);font-weight:600;}
+  .ref-mi{padding:8px;border:0.5px solid var(--border2);border-radius:6px;background:var(--bg3);font-size:14px;color:var(--text);text-align:center;width:100%;}
+  .ref-mi:focus{outline:none;border-color:var(--green);}
+  .ref-save{width:100%;margin-top:8px;padding:9px;border:0.5px solid var(--green);border-radius:8px;background:var(--green-dim);cursor:pointer;font-size:13px;color:var(--green);font-weight:600;}
+  .ref-save:hover{background:var(--green-dim2);}
+  .ref-item{padding:8px 14px;display:flex;flex-direction:column;gap:5px;border-top:0.5px solid var(--border);}
+  .ref-item-top{display:flex;align-items:center;gap:8px;}
+  .ref-item-desc{font-size:13px;color:var(--text3);font-style:italic;flex:1;}
+  .ref-item-del{background:transparent;border:none;cursor:pointer;font-size:16px;color:var(--text3);padding:0;line-height:1;}
+  .ref-item-del:hover{color:var(--red);}
+  .macro-row{display:flex;gap:5px;flex-wrap:wrap;}
+  .mp{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600;}
+  .mk{background:rgba(249,115,22,.15);color:var(--orange);}
+  .mp2{background:var(--green-dim);color:var(--green);}
+  .mc{background:rgba(245,158,11,.15);color:var(--amber);}
+  .mg{background:rgba(59,130,246,.15);color:var(--blue);}
+  .ref-empty{padding:5px 14px 12px;font-size:13px;color:var(--text3);font-style:italic;}
+  .total-dia{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px;background:var(--bg3);border-top:0.5px solid var(--border);align-items:center;}
+  .total-lbl{font-size:11px;color:var(--text3);margin-right:2px;font-weight:600;}
+
+  /* ===== HABITOS - calendar/report ===== */
+  .sgrid2{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
+  .sday{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);}
+  .sday.full{background:var(--green);color:#fff;font-weight:600;}
+  .sday.partial{background:rgba(34,197,94,.25);color:var(--green);}
+  .sday.empty{background:var(--bg3);}
+  .sday.today{outline:2px solid var(--green);outline-offset:1px;}
+  .wklbl{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;}
+  .wl{font-size:10px;color:var(--text3);text-align:center;font-weight:600;}
+  .rcard{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;}
+  .rrow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:14px;}
+  .rrow:last-child{border-bottom:none;}
+  .rname{display:flex;align-items:center;gap:8px;}
+  .rval{font-weight:600;}
+  .rpct{font-size:11px;color:var(--text3);margin-left:4px;}
+  .mini-bar{height:4px;border-radius:2px;background:var(--bg3);margin-top:4px;margin-bottom:6px;overflow:hidden;}
+  .mini-fill{height:100%;border-radius:2px;}
+  .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;}
+  .scard{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:14px;}
+  .scard-lbl{font-size:11px;color:var(--text3);margin-bottom:4px;}
+  .scard-val{font-size:22px;font-weight:700;}
+  .scard-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+  .mnav{display:flex;align-items:center;gap:6px;margin-bottom:1rem;}
+  .mnav button{background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:15px;color:var(--text2);}
+  .mnav button:hover{border-color:var(--green);color:var(--green);}
+  .mlbl{font-size:16px;font-weight:600;flex:1;text-align:center;}
+
+  /* ===== HABITOS - add/del habit ===== */
+  .add-sec-btn{background:transparent;border:0.5px solid var(--border2);border-radius:6px;padding:2px 10px;font-size:13px;cursor:pointer;color:var(--text3);margin-left:auto;}
+  .add-sec-btn:hover{border-color:var(--green);color:var(--green);}
+  .del-habit{background:transparent;border:none;cursor:pointer;font-size:14px;color:transparent;padding:0 2px;line-height:1;transition:color .15s;}
+  .hi:hover .del-habit{color:var(--text3);}
+  .del-habit:hover{color:var(--red)!important;}
+  .add-habit-row{display:flex;gap:8px;padding:10px 14px;border-top:0.5px solid var(--border);align-items:center;}
+  .add-habit-inp{flex:1;padding:8px 10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:14px;color:var(--text);}
+  .add-habit-inp:focus{outline:none;border-color:var(--green);}
+  .add-habit-icon{width:50px;padding:8px 4px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:16px;color:var(--text);text-align:center;}
+  .add-habit-icon:focus{outline:none;border-color:var(--green);}
+  .add-habit-ok{padding:8px 14px;border:none;border-radius:8px;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;}
+  .add-habit-ok:hover{opacity:.9;}
+  .migrate-box{background:var(--bg2);border:1px solid rgba(59,130,246,.3);border-radius:12px;padding:14px;margin-bottom:12px;display:none;}
+  .migrate-title{font-size:12px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  .migrate-hint{font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;}
+  .migrate-btn{width:100%;padding:10px;border:none;border-radius:8px;background:var(--blue);cursor:pointer;font-size:14px;font-weight:600;color:#fff;}
+  .migrate-btn:hover{opacity:.9;}
+
+  /* ===== BIBLIA ===== */
+  .bible-tabs .tab.active{background:var(--gold);color:#111;}
+  .verse-card{background:var(--bg2);border:1px solid rgba(212,160,23,.3);border-radius:14px;padding:20px;margin-bottom:1rem;position:relative;}
+  .verse-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),transparent);border-radius:14px 14px 0 0;}
+  .verse-ref{font-size:11px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+  .verse-text{font-size:18px;line-height:1.6;font-style:italic;color:var(--text);margin-bottom:12px;}
+  .verse-theme{font-size:13px;color:var(--text2);font-weight:500;}
+  .bible-info{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:1rem;}
+  .bible-info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;color:var(--text2);}
+  .bible-info-val{font-weight:600;color:var(--text);}
+  .bible-reader{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;margin-bottom:1rem;overflow:hidden;}
+  .bible-reader-toggle{width:100%;padding:12px 14px;border:none;background:transparent;color:var(--gold);font-size:13px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;}
+  .bible-reader-toggle:hover{background:var(--bg3);}
+  .bible-reader-content{padding:0 14px 14px;display:none;}
+  .bible-reader-content.open{display:block;}
+  .bible-verse{padding:8px 0;border-bottom:0.5px solid var(--border);font-size:14px;line-height:1.6;color:var(--text2);}
+  .bible-verse:last-child{border-bottom:none;}
+  .bible-verse-num{font-size:11px;font-weight:700;color:var(--gold);margin-right:6px;}
+  .bible-refl{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:1rem;}
+  .bible-refl-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+  .bible-refl-text{font-size:14px;color:var(--text2);line-height:1.5;}
+  .bible-quest{font-size:14px;color:var(--amber);font-style:italic;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);}
+  .bible-note{width:100%;padding:10px 12px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:14px;color:var(--text);resize:vertical;font-family:inherit;line-height:1.5;min-height:80px;}
+  .bible-note:focus{outline:none;border-color:var(--gold);}
+  .bible-save-btn{width:100%;margin-top:8px;padding:10px;border:none;border-radius:8px;background:var(--gold);cursor:pointer;font-size:14px;font-weight:600;color:#111;}
+  .bible-save-btn:hover{opacity:.9;}
+  .bible-complete-btn{width:100%;margin-top:1rem;padding:12px;border:none;border-radius:10px;background:var(--green);cursor:pointer;font-size:15px;font-weight:700;color:#fff;}
+  .bible-complete-btn:hover{opacity:.9;}
+  .bible-complete-btn.completed{background:var(--bg3);color:var(--green);border:1px solid var(--green);cursor:default;}
+  .plan-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background .1s;}
+  .plan-item:last-child{border-bottom:none;}
+  .plan-item:hover{background:var(--bg3);}
+  .plan-item.locked{opacity:.4;cursor:default;}
+  .plan-item.locked:hover{background:transparent;}
+  .plan-item.current{background:var(--gold-dim);}
+  .plan-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;color:var(--text3);}
+  .plan-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+  .plan-dot.current{background:var(--gold);border-color:var(--gold);color:#111;}
+  .plan-info{flex:1;}
+  .plan-book{font-size:14px;font-weight:500;}
+  .plan-theme{font-size:12px;color:var(--text3);margin-top:2px;}
+
+  /* ===== LOA ===== */
+  .loa-tabs .tab.active{background:var(--purple);color:#fff;}
+  .loa-ring-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem;}
+  .loa-ring-svg{width:160px;height:160px;}
+  .loa-ring-bg{fill:none;stroke:var(--bg3);stroke-width:10;}
+  .loa-ring-fill{fill:none;stroke:var(--green);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .5s;}
+  .loa-ring-text{font-size:28px;font-weight:700;fill:var(--text);}
+  .loa-ring-sub{font-size:12px;fill:var(--text3);}
+  .loa-msg{font-size:14px;color:var(--text2);text-align:center;margin-top:10px;}
+  .loa-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background .1s;}
+  .loa-item:last-child{border-bottom:none;}
+  .loa-item:hover{background:var(--bg3);}
+  .loa-item.read{opacity:.5;}
+  .loa-item.read .loa-text{text-decoration:line-through;color:var(--text3);}
+  .loa-check{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+  .loa-check.checked{background:var(--purple);border-color:var(--purple);}
+  .loa-text{font-size:14px;flex:1;line-height:1.4;}
+  .loa-actions{display:flex;gap:8px;margin-top:1rem;}
+  .loa-action-btn{flex:1;padding:10px;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:13px;color:var(--text2);font-weight:500;}
+  .loa-action-btn:hover{border-color:var(--purple);color:var(--purple);}
+  .loa-congrats{background:var(--purple-dim);border:1px solid rgba(139,92,246,.3);border-radius:12px;padding:20px;text-align:center;margin-bottom:1rem;display:none;}
+  .loa-congrats.show{display:block;}
+  .loa-congrats-icon{font-size:40px;margin-bottom:8px;}
+  .loa-congrats-text{font-size:16px;font-weight:600;color:var(--purple);}
+  .loa-add-ta{width:100%;padding:10px 12px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:14px;color:var(--text);resize:vertical;font-family:inherit;line-height:1.5;min-height:80px;}
+  .loa-add-ta:focus{outline:none;border-color:var(--purple);}
+  .loa-add-btn{width:100%;margin-top:8px;padding:10px;border:none;border-radius:8px;background:var(--purple);cursor:pointer;font-size:14px;font-weight:600;color:#fff;}
+  .loa-add-btn:hover{opacity:.9;}
+  .loa-tips{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-top:1rem;}
+  .loa-tips-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+  .loa-tip{font-size:13px;color:var(--text3);padding:4px 0;display:flex;gap:8px;}
+  .loa-manage-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:0.5px solid var(--border);}
+  .loa-manage-item:last-child{border-bottom:none;}
+  .loa-manage-num{font-size:12px;color:var(--text3);font-weight:600;min-width:24px;}
+  .loa-manage-text{font-size:13px;flex:1;color:var(--text2);}
+  .loa-manage-del{background:transparent;border:none;cursor:pointer;font-size:16px;color:var(--text3);padding:0;}
+  .loa-manage-del:hover{color:var(--red);}
+  .loa-count{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--purple-dim);color:var(--purple);font-weight:600;}
+</style>
+</head>
+<body>
+
+<!-- Modal refeicao -->
+<div class="modal-ov" id="modalOv">
+  <div class="modal">
+    <div class="modal-title">Confirmar refeicao</div>
+    <div class="modal-sub">Verifique e ajuste os valores antes de salvar</div>
+    <div class="modal-desc" id="modalDesc"></div>
+    <div class="modal-grid">
+      <div class="modal-f"><span class="modal-lbl">Calorias (kcal)</span><input class="modal-inp kcal" type="number" id="mKcal" min="0"/></div>
+      <div class="modal-f"><span class="modal-lbl">Proteina (g)</span><input class="modal-inp prot" type="number" id="mProt" min="0"/></div>
+      <div class="modal-f"><span class="modal-lbl">Carboidrato (g)</span><input class="modal-inp carb" type="number" id="mCarb" min="0"/></div>
+      <div class="modal-f"><span class="modal-lbl">Gordura (g)</span><input class="modal-inp gord" type="number" id="mGord" min="0"/></div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-confirm" onclick="confirmImport()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- Top Navigation -->
+  <nav class="app-nav">
+    <button class="app-nav-btn active" onclick="switchApp('habitos',this)">Habitos</button>
+    <button class="app-nav-btn" onclick="switchApp('biblia',this)">Estudo Biblico</button>
+    <button class="app-nav-btn" onclick="switchApp('loa',this)">Lei da Atracao</button>
+  </nav>
+
+  <!-- ==================== APP: HABITOS ==================== -->
+  <div id="app-habitos">
+    <div class="migrate-box" id="migrateBox">
+      <div class="migrate-title">Migrar dados do localStorage</div>
+      <div class="migrate-hint">Detectamos dados antigos no localStorage do navegador. Clique para migrar para o servidor.</div>
+      <button class="migrate-btn" onclick="migrateFromLocalStorage()">Migrar dados</button>
+    </div>
+
+    <div class="header">
+      <div>
+        <h1>Meus habitos</h1>
+        <span class="header-sub" id="headerSub"></span>
+      </div>
+      <div class="date-nav">
+        <button onclick="changeDay(-1)">&lsaquo;</button>
+        <span class="date-label" id="dateLabel"></span>
+        <button onclick="changeDay(1)">&rsaquo;</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchHabitTab('daily',this)">Hoje</button>
+      <button class="tab" onclick="switchHabitTab('calendar',this)">Calendario</button>
+      <button class="tab" onclick="switchHabitTab('report',this)">Relatorio</button>
+      <button class="tab" onclick="switchHabitTab('treinos',this)">Treinos</button>
+      <button class="tab" onclick="switchHabitTab('detail',this)">Detalhado</button>
+    </div>
+
+    <div id="tab-daily">
+      <div class="prog">
+        <div class="prog-top"><span class="prog-lbl" id="progressText">0 de 0</span><span class="prog-pct" id="progressPct">0%</span></div>
+        <div class="prog-track"><div class="prog-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+
+      <div class="import-box">
+        <div class="import-title">Importar refeicao do Claude</div>
+        <div class="import-hint">Cole aqui o codigo que o Claude vai te dar.<br>Formato: <strong>MACRO:refeicao|kcal|prot|carb|gord|descricao</strong></div>
+        <textarea class="import-ta" id="importInput" rows="2" placeholder="Cole o codigo MACRO: aqui..."></textarea>
+        <button class="import-btn" onclick="parseImport()">Importar e verificar</button>
+      </div>
+
+      <div class="section">
+        <div class="stitle">Sono</div>
+        <div class="card">
+          <div class="sono-w">
+            <div class="sono-top"><span class="hicon">&#x1F634;</span><div class="sono-info"><div class="sono-name">Registro de sono</div><div class="sono-sub">dormiu e acordou</div></div><span id="sonoQualBadge"></span></div>
+            <div class="sono-grid">
+              <div class="sono-field"><span class="sono-lbl">Dormiu as</span><input class="sono-inp" type="time" id="sonoInicio" onchange="saveSono()"/></div>
+              <div class="sono-field"><span class="sono-lbl">Acordou as</span><input class="sono-inp" type="time" id="sonoFim" onchange="saveSono()"/></div>
+            </div>
+            <div class="sono-res" id="sonoResult" style="display:none"><span>Dormiu</span><span class="sono-h" id="sonoHDisp"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="dynamicSections"></div>
+
+      <div class="section">
+        <div class="stitle">Canal do YouTube <span class="yt-s" id="ytStreak"></span></div>
+        <div class="card">
+          <div class="canal-w">
+            <div class="canal-top" onclick="toggle('yt_trabalhou')">
+              <div class="cb" id="cb-yt_trabalhou"><div class="ck"></div></div>
+              <span class="hicon">&#x1F3A5;</span>
+              <div class="canal-info"><div class="canal-name" id="yt-nome">Trabalhou no canal</div><div class="canal-sub">estudo, roteiro, gravacao, edicao...</div></div>
+            </div>
+            <div class="hr-row">
+              <span class="hr-lbl">Horas hoje:</span>
+              <div class="hr-btns">
+                <button class="hr-btn m" onclick="addHoras(-.5)">- 30min</button>
+                <button class="hr-btn" onclick="addHoras(.5)">+ 30min</button>
+                <button class="hr-btn" onclick="addHoras(1)">+ 1h</button>
+              </div>
+              <span class="hr-disp" id="disp-yt">0h</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="stitle">Alimentacao</div>
+        <div class="card">
+          <div class="cal-w">
+            <div class="cal-top">
+              <span class="hicon">&#x1F525;</span>
+              <div class="cal-info"><div class="cal-name">Calorias queimadas</div><div class="cal-sub">valor do relogio/smartwatch</div></div>
+              <div style="text-align:right"><span class="cal-big" id="calDisplay">&mdash;</span><span class="cal-unit"> kcal</span></div>
+            </div>
+            <div class="cal-row">
+              <button class="cal-btn m" onclick="addCal(-100)">- 100</button>
+              <button class="cal-btn m" onclick="addCal(-50)">- 50</button>
+              <button class="cal-btn" onclick="addCal(50)">+ 50</button>
+              <button class="cal-btn" onclick="addCal(100)">+ 100</button>
+            </div>
+            <input class="cal-inp" type="number" id="calInput" placeholder="ou digita o valor exato aqui..." min="0" oninput="setCal(this.value)"/>
+          </div>
+        </div>
+
+        <div style="font-size:11px;color:var(--text3);margin:10px 0 5px">Refeicoes do dia</div>
+        <div class="card" id="refeicoesCard"></div>
+        <div class="card" id="totalDiaWrap" style="display:none;margin-top:4px">
+          <div class="total-dia">
+            <span class="total-lbl">Total ingerido:</span>
+            <span class="mp mk" id="tot-kcal"></span>
+            <span class="mp mp2" id="tot-prot"></span>
+            <span class="mp mc" id="tot-carb"></span>
+            <span class="mp mg" id="tot-gord"></span>
+          </div>
+        </div>
+
+        <div id="section-ruim" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div id="tab-calendar" style="display:none">
+      <div class="mnav"><button onclick="changeCalMonth(-1)">&lsaquo;</button><span class="mlbl" id="calMonthLabel"></span><button onclick="changeCalMonth(1)">&rsaquo;</button></div>
+      <div class="wklbl"><div class="wl">D</div><div class="wl">S</div><div class="wl">T</div><div class="wl">Q</div><div class="wl">Q</div><div class="wl">S</div><div class="wl">S</div></div>
+      <div class="sgrid2" id="calGrid"></div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--text3)">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:var(--green);display:inline-block"></span> Tudo feito</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(34,197,94,.25);display:inline-block"></span> Parcial</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:var(--bg3);display:inline-block"></span> Nenhum</span>
+      </div>
+    </div>
+
+    <div id="tab-report" style="display:none">
+      <div class="mnav"><button onclick="changeReportMonth(-1)">&lsaquo;</button><span class="mlbl" id="reportMonthLabel"></span><button onclick="changeReportMonth(1)">&rsaquo;</button></div>
+      <button onclick="exportPDF()" style="width:100%;padding:11px;border:none;border-radius:10px;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:1rem;">Exportar relatorio em PDF</button>
+      <div class="sgrid" id="summaryGrid"></div>
+      <div class="section"><div class="stitle">Sono</div><div class="rcard" id="reportSono"></div></div>
+      <div id="reportSectionsContainer"></div>
+      <div class="section"><div class="stitle">Canal do YouTube</div><div class="rcard" id="reportYT"></div></div>
+      <div class="section"><div class="stitle">Nutricao - media do mes</div><div class="rcard" id="reportNutri"></div></div>
+      <div class="section"><div class="stitle">Calorias queimadas</div><div class="rcard" id="reportCal"></div></div>
+      <div class="section"><div class="stitle">Agua</div><div class="rcard" id="reportAgua"></div></div>
+      <div id="reportAlimContainer"></div>
+    </div>
+
+    <div id="tab-treinos" style="display:none">
+      <div class="mnav"><button onclick="changeTreinoMonth(-1)">&lsaquo;</button><span class="mlbl" id="treinoMonthLabel"></span><button onclick="changeTreinoMonth(1)">&rsaquo;</button></div>
+      <button onclick="exportTreinoPDF()" style="width:100%;padding:11px;border:none;border-radius:10px;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:1rem;">Exportar treinos em PDF</button>
+      <div id="treinoContent"></div>
+    </div>
+
+    <div id="tab-detail" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:4px;flex:1">
+          <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">De</span>
+          <input type="date" id="detailFrom" style="padding:8px 10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg2);font-size:14px;color:var(--text);width:100%" onchange="renderDetail()"/>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex:1">
+          <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Ate</span>
+          <input type="date" id="detailTo" style="padding:8px 10px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg2);font-size:14px;color:var(--text);width:100%" onchange="renderDetail()"/>
+        </div>
+      </div>
+      <button onclick="exportDetailPDF()" style="width:100%;padding:11px;border:none;border-radius:10px;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:1rem;">Exportar periodo em PDF</button>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <!-- ==================== APP: ESTUDO BIBLICO ==================== -->
+  <div id="app-biblia" style="display:none">
+    <div class="header">
+      <div>
+        <h1>Estudo Biblico</h1>
+        <span class="header-sub">Plano de 17 dias em Salmos e mais</span>
+      </div>
+    </div>
+
+    <div class="tabs bible-tabs">
+      <button class="tab active" onclick="switchBibleTab('hoje',this)">Hoje</button>
+      <button class="tab" onclick="switchBibleTab('plano',this)">Plano</button>
+      <button class="tab" onclick="switchBibleTab('notas',this)">Notas</button>
+    </div>
+
+    <div id="bible-hoje">
+      <div class="verse-card">
+        <div class="verse-ref" id="bibleVerseRef"></div>
+        <div class="verse-text" id="bibleVerseText"></div>
+        <div class="verse-theme" id="bibleTheme"></div>
+      </div>
+
+      <div class="bible-info">
+        <div class="bible-info-row"><span>Livro</span><span class="bible-info-val" id="bibleBook"></span></div>
+        <div class="bible-info-row"><span>Capitulo</span><span class="bible-info-val" id="bibleCh"></span></div>
+        <div class="bible-info-row"><span>Tema</span><span class="bible-info-val" id="bibleThemeInfo"></span></div>
+        <div class="bible-info-row"><span>Dia</span><span class="bible-info-val" id="bibleDayInfo"></span></div>
+      </div>
+
+      <div class="bible-reader">
+        <button class="bible-reader-toggle" onclick="toggleBibleReader()">
+          <span id="bibleReaderArrow">&#9654;</span> Ler capitulo completo
+        </button>
+        <div class="bible-reader-content" id="bibleReaderContent"></div>
+      </div>
+
+      <div class="bible-refl">
+        <div class="bible-refl-title">Reflexao</div>
+        <div class="bible-refl-text" id="bibleRefl"></div>
+        <div class="bible-quest" id="bibleQuest"></div>
+      </div>
+
+      <div class="section">
+        <div class="stitle">Anotacao rapida</div>
+        <textarea class="bible-note" id="bibleQuickNote" placeholder="Escreva suas reflexoes sobre o texto de hoje..."></textarea>
+        <button class="bible-save-btn" onclick="saveBibleNote()">Salvar anotacao</button>
+      </div>
+
+      <button class="bible-complete-btn" id="bibleCompleteBtn" onclick="completeBibleDay()">Concluir leitura do dia</button>
+    </div>
+
+    <div id="bible-plano" style="display:none">
+      <div class="prog" style="margin-bottom:1rem">
+        <div class="prog-top"><span class="prog-lbl" id="biblePlanProgress">0 de 17</span><span class="prog-pct" id="biblePlanPct">0%</span></div>
+        <div class="prog-track"><div class="prog-fill" id="biblePlanFill" style="width:0%"></div></div>
+      </div>
+      <div class="card" id="biblePlanList"></div>
+    </div>
+
+    <div id="bible-notas" style="display:none">
+      <div class="section">
+        <div class="stitle">Diario espiritual</div>
+        <textarea class="bible-note" id="bibleDiary" placeholder="Suas reflexoes, oracoes, pensamentos..." style="min-height:200px"></textarea>
+        <button class="bible-save-btn" onclick="saveBibleDiary()">Salvar diario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== APP: LEI DA ATRACAO ==================== -->
+  <div id="app-loa" style="display:none">
+    <div class="header">
+      <div>
+        <h1>Lei da Atracao</h1>
+        <span class="header-sub">Afirmacoes diarias para manifestacao</span>
+      </div>
+    </div>
+
+    <div class="tabs loa-tabs">
+      <button class="tab active" onclick="switchLoaTab('hoje',this)">Hoje</button>
+      <button class="tab" onclick="switchLoaTab('adicionar',this)">Adicionar</button>
+      <button class="tab" onclick="switchLoaTab('gerenciar',this)">Gerenciar</button>
+    </div>
+
+    <div id="loa-hoje">
+      <div class="loa-congrats" id="loaCongrats">
+        <div class="loa-congrats-icon">&#x2728;</div>
+        <div class="loa-congrats-text">Todas as afirmacoes lidas!</div>
+      </div>
+
+      <div class="loa-ring-wrap">
+        <svg class="loa-ring-svg" viewBox="0 0 160 160">
+          <circle class="loa-ring-bg" cx="80" cy="80" r="65"/>
+          <circle class="loa-ring-fill" id="loaRingFill" cx="80" cy="80" r="65" stroke-dasharray="408.4" stroke-dashoffset="408.4" transform="rotate(-90 80 80)"/>
+          <text class="loa-ring-text" x="80" y="75" text-anchor="middle" id="loaRingText">0/0</text>
+          <text class="loa-ring-sub" x="80" y="95" text-anchor="middle">lidas</text>
+        </svg>
+        <div class="loa-msg" id="loaMsg"></div>
+      </div>
+
+      <div class="card" id="loaList"></div>
+
+      <div class="loa-actions">
+        <button class="loa-action-btn" onclick="loaMarkAll()">Marcar todas</button>
+        <button class="loa-action-btn" onclick="loaResetDay()">Resetar dia</button>
+      </div>
+    </div>
+
+    <div id="loa-adicionar" style="display:none">
+      <div class="section">
+        <div class="stitle">Nova afirmacao</div>
+        <textarea class="loa-add-ta" id="loaNewText" placeholder="Escreva sua nova afirmacao..."></textarea>
+        <button class="loa-add-btn" onclick="loaAddAffirmation()">Adicionar afirmacao</button>
+      </div>
+
+      <div class="loa-tips">
+        <div class="loa-tips-title">Dicas para boas afirmacoes</div>
+        <div class="loa-tip"><span>&#x2714;</span> Use o tempo presente ("Eu sou", "Eu tenho")</div>
+        <div class="loa-tip"><span>&#x2714;</span> Seja especifico e positivo</div>
+        <div class="loa-tip"><span>&#x2714;</span> Evite negacoes ("nao", "nunca")</div>
+        <div class="loa-tip"><span>&#x2714;</span> Inclua emocao e sentimento</div>
+        <div class="loa-tip"><span>&#x2714;</span> Acredite no que esta afirmando</div>
+      </div>
+    </div>
+
+    <div id="loa-gerenciar" style="display:none">
+      <div class="section">
+        <div class="stitle">Suas afirmacoes <span class="loa-count" id="loaCount">0</span></div>
+        <div class="card" id="loaManageList"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<script src="js/loa-data.js"></script>
+<script src="js/habitos-app.js"></script>
+<script src="js/bible-app.js"></script>
+<script src="js/loa-app.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
