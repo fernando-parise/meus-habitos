@@ -121,7 +121,7 @@ function switchApp(app, btn) {
   if (app === 'habitos') renderDaily();
   if (app === 'biblia') renderBibleHoje();
   if (app === 'loa') renderLoaHoje();
-  if (app === 'hobbies') renderTiroPainel();
+  if (app === 'hobbies') renderTiroHabitualidade();
 }
 
 // ========== INIT ==========

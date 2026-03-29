@@ -140,7 +140,7 @@ function switchHobby(hobby) {
   if (el) el.style.display = '';
   document.querySelectorAll('.hobby-menu-btn').forEach(function(b) { b.classList.remove('active'); });
   event.target.classList.add('active');
-  if (hobby === 'tirohp') renderTiroPainel();
+  if (hobby === 'tirohp') renderTiroHabitualidade();
 }
 
 function switchTiroTab(tab, btn) {
@@ -701,24 +701,40 @@ function tiroParseImport() {
     return;
   }
 
-  var t = DATA.hobbies.tirohp;
-  var entry = {
-    id: tiroNextId(t.habitualidades),
-    data: data,
-    tipo: tipo,
-    munMinhas: munMinhas,
-    munClube: munClube,
-    armas: armaIds,
-    obs: obs
-  };
-  if (semDesc) entry.semDesconto = true;
-  t.habitualidades.push(entry);
-  saveData();
-  document.getElementById('tiro-import-input').value = '';
-  renderTiroHabitualidade();
+  // Populate form fields for review
+  var dataInput = document.getElementById('tiro-hab-data');
+  var dataDisplay = document.getElementById('tiro-hab-data-display');
+  if (dataInput) dataInput.value = data;
+  if (dataDisplay) dataDisplay.textContent = dpFormatBR(data);
 
-  var info = TIRO_TIPOS_HAB[tipo] || { label: tipo };
-  alert('Importado: ' + info.label + ' em ' + data + (munMinhas > 0 ? ' (' + munMinhas + ' mun. minhas)' : ''));
+  var tipoSel = document.getElementById('tiro-hab-tipo');
+  if (tipoSel) tipoSel.value = tipo;
+
+  var minhasInput = document.getElementById('tiro-hab-minhas');
+  var clubeInput = document.getElementById('tiro-hab-clube');
+  if (minhasInput) minhasInput.value = munMinhas;
+  if (clubeInput) clubeInput.value = munClube;
+
+  document.querySelectorAll('.tiro-hab-arma-cb').forEach(function(cb) {
+    cb.checked = armaIds.indexOf(parseInt(cb.value)) !== -1;
+  });
+
+  var obsInput = document.getElementById('tiro-hab-obs');
+  if (obsInput) obsInput.value = obs;
+
+  var semDescCb = document.getElementById('tiro-hab-semdesc');
+  if (semDescCb) semDescCb.checked = semDesc;
+
+  document.getElementById('tiro-import-input').value = '';
+
+  // Scroll to form and highlight it
+  var formCard = dataInput ? dataInput.closest('.section') : null;
+  if (formCard) {
+    formCard.style.transition = 'box-shadow .3s';
+    formCard.style.boxShadow = '0 0 0 2px var(--purple)';
+    setTimeout(function() { formCard.style.boxShadow = ''; }, 1500);
+    formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 // ========== CONFIG ==========
