@@ -151,6 +151,8 @@ function renderTiroMunicao() {
   // Form nova compra
   html += '<div class="section"><div class="stitle">Nova compra</div>';
   html += '<div class="card" style="padding:14px;">';
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Data</label>';
+  html += '<input type="date" id="tiro-mun-data" value="' + dk(new Date()) + '" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
   html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
   html += '<div style="flex:1;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Quantidade</label>';
   html += '<input type="number" id="tiro-mun-qtd" min="1" placeholder="50" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
@@ -187,14 +189,16 @@ function renderTiroMunicao() {
 }
 
 function tiroAddCompra() {
+  var dataVal = document.getElementById('tiro-mun-data').value;
   var qtd = parseInt(document.getElementById('tiro-mun-qtd').value);
   var tipo = document.getElementById('tiro-mun-tipo').value;
   var obs = document.getElementById('tiro-mun-obs').value.trim();
+  if (!dataVal) { alert('Informe a data.'); return; }
   if (!qtd || qtd <= 0) { alert('Informe a quantidade.'); return; }
   var t = DATA.hobbies.tirohp;
   t.compras.push({
     id: tiroNextId(t.compras),
-    data: dk(new Date()),
+    data: dataVal,
     qtd: qtd,
     tipo: tipo,
     obs: obs
