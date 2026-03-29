@@ -339,7 +339,28 @@
   </div>
 </div>
 
-<div class="app">
+<!-- GitHub Setup Screen -->
+<div id="gh-setup" style="display:none">
+  <div class="app" style="padding-top:3rem;">
+    <div class="card" style="padding:24px;">
+      <h2 style="font-size:20px;margin-bottom:6px;">Conectar ao GitHub</h2>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:20px;">Seus dados ficam num Gist privado. Configure o token para acessar de qualquer dispositivo.</p>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Personal Access Token</label>
+        <input id="gh-token" type="password" placeholder="ghp_..." style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:4px;">Gist ID (deixe vazio para criar um novo)</label>
+        <input id="gh-gist" placeholder="Cole o ID do Gist ou deixe vazio" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;">
+      </div>
+      <button onclick="ghConnect()" style="width:100%;padding:12px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Conectar</button>
+      <div id="gh-status" style="font-size:13px;color:var(--red);margin-top:10px;text-align:center;"></div>
+      <p style="font-size:11px;color:var(--text3);margin-top:16px;line-height:1.5;">Crie um token em GitHub &gt; Settings &gt; Developer settings &gt; Personal access tokens (classic). Scope necessario: <b>gist</b>.</p>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app-wrap">
   <!-- Top Navigation -->
   <nav class="app-nav">
     <button class="app-nav-btn active" onclick="switchApp('habitos',this)">Habitos</button>
@@ -643,6 +664,7 @@
 
 
 <script src="js/loa-data.js"></script>
+<script src="js/github-api.js"></script>
 <script src="js/habitos-app.js"></script>
 <script src="js/bible-app.js"></script>
 <script src="js/loa-app.js"></script>
