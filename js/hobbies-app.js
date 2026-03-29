@@ -335,13 +335,12 @@ function renderTiroHabitualidade() {
   var html = '';
 
   // Import box
-  html += '<div class="section"><div class="stitle">Importar do Claude</div>';
-  html += '<div class="card" style="padding:14px;">';
-  html += '<div style="display:flex;gap:8px;">';
-  html += '<input type="text" id="tiro-import-input" placeholder="Cole o codigo TIRO: aqui..." style="flex:1;padding:8px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;">';
-  html += '<button onclick="tiroParseImport()" style="padding:8px 14px;border-radius:6px;border:none;background:var(--purple);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">Importar</button>';
-  html += '</div>';
-  html += '<div style="font-size:11px;color:var(--text3);margin-top:6px;">Formato: TIRO:data|tipo|munMinhas|munClube|armaIds|obs</div>';
+  html += '<div class="section">';
+  html += '<div class="card" style="padding:16px;border-color:var(--purple-dim);border-width:1px;">';
+  html += '<div style="font-size:13px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Importar habitualidade do Claude</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Cole aqui o codigo que o Claude vai te dar.<br>Formato: TIRO:data|tipo|munMinhas|munClube|armaIds|obs</div>';
+  html += '<textarea id="tiro-import-input" rows="2" placeholder="Cole o codigo TIRO: aqui..." style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-family:monospace;resize:vertical;margin-bottom:10px;"></textarea>';
+  html += '<button onclick="tiroParseImport()" style="width:100%;padding:12px;border-radius:8px;border:none;background:var(--purple);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Importar e verificar</button>';
   html += '</div></div>';
 
   // Form
