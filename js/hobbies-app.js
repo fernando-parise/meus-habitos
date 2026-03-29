@@ -333,6 +333,17 @@ function renderTiroHabitualidade() {
   var t = DATA.hobbies.tirohp;
 
   var html = '';
+
+  // Import box
+  html += '<div class="section"><div class="stitle">Importar do Claude</div>';
+  html += '<div class="card" style="padding:14px;">';
+  html += '<div style="display:flex;gap:8px;">';
+  html += '<input type="text" id="tiro-import-input" placeholder="Cole o codigo TIRO: aqui..." style="flex:1;padding:8px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;">';
+  html += '<button onclick="tiroParseImport()" style="padding:8px 14px;border-radius:6px;border:none;background:var(--purple);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">Importar</button>';
+  html += '</div>';
+  html += '<div style="font-size:11px;color:var(--text3);margin-top:6px;">Formato: TIRO:data|tipo|munMinhas|munClube|armaIds|obs</div>';
+  html += '</div></div>';
+
   // Form
   html += '<div class="section"><div class="stitle">Registrar ida ao clube</div>';
   html += '<div class="card" style="padding:14px;">';
@@ -662,6 +673,53 @@ function tiroDeleteArma(id) {
   t.armas = t.armas.filter(function(a) { return a.id !== id; });
   saveData();
   renderTiroArmas();
+}
+
+// ========== IMPORTACAO ==========
+// Formato: TIRO:data|tipo|munMinhas|munClube|armaIds|obs|semDesconto
+// Exemplo: TIRO:2026-03-28|treino|50|0|1,2|Treino de sacada|0
+// armaIds: ids separados por virgula (ou vazio)
+// semDesconto: 1 = retroativo (nao desconta), 0 ou vazio = normal
+function tiroParseImport() {
+  var raw = document.getElementById('tiro-import-input').value.trim();
+  if (!raw) { alert('Cole o codigo TIRO: primeiro.'); return; }
+  if (!raw.startsWith('TIRO:')) { alert('Formato invalido. Deve comecar com TIRO:'); return; }
+  var parts = raw.slice(5).split('|');
+  if (parts.length < 2) { alert('Codigo incompleto.'); return; }
+
+  var data = parts[0] || dk(new Date());
+  var tipo = parts[1] || 'treino';
+  var munMinhas = parseInt(parts[2]) || 0;
+  var munClube = parseInt(parts[3]) || 0;
+  var armaIds = parts[4] ? parts[4].split(',').map(function(x) { return parseInt(x.trim()); }).filter(function(x) { return !isNaN(x); }) : [];
+  var obs = parts[5] || '';
+  var semDesc = parts[6] === '1';
+
+  // Validate tipo
+  var tiposValidos = ['treino', 'curso', 'camp_interno', 'camp_nacional'];
+  if (tiposValidos.indexOf(tipo) === -1) {
+    alert('Tipo invalido: ' + tipo + '. Use: ' + tiposValidos.join(', '));
+    return;
+  }
+
+  var t = DATA.hobbies.tirohp;
+  var entry = {
+    id: tiroNextId(t.habitualidades),
+    data: data,
+    tipo: tipo,
+    munMinhas: munMinhas,
+    munClube: munClube,
+    armas: armaIds,
+    obs: obs
+  };
+  if (semDesc) entry.semDesconto = true;
+  t.habitualidades.push(entry);
+  saveData();
+  document.getElementById('tiro-import-input').value = '';
+  renderTiroHabitualidade();
+
+  var info = TIRO_TIPOS_HAB[tipo] || { label: tipo };
+  alert('Importado: ' + info.label + ' em ' + data + (munMinhas > 0 ? ' (' + munMinhas + ' mun. minhas)' : ''));
 }
 
 // ========== CONFIG ==========
