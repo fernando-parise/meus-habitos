@@ -443,9 +443,34 @@ function tiroDeleteHabitualidade(id) {
 }
 
 // ========== RELATORIO ==========
+function tiroRelDefaults() {
+  var hoje = new Date();
+  var umAnoAtras = new Date(hoje.getFullYear() - 1, hoje.getMonth(), hoje.getDate());
+  return { de: dk(umAnoAtras), ate: dk(hoje) };
+}
+
 function renderTiroRelatorio() {
   var t = DATA.hobbies.tirohp;
-  var habs = t.habitualidades.slice().sort(function(a, b) { return b.data.localeCompare(a.data); });
+  var defs = tiroRelDefaults();
+  var deEl = document.getElementById('tiro-rel-de');
+  var ateEl = document.getElementById('tiro-rel-ate');
+  var de = deEl ? deEl.value : defs.de;
+  var ate = ateEl ? ateEl.value : defs.ate;
+
+  var habs = t.habitualidades.slice().filter(function(h) {
+    return h.data >= de && h.data <= ate;
+  }).sort(function(a, b) { return b.data.localeCompare(a.data); });
+
+  var html = '';
+
+  // Filtro periodo
+  html += '<div class="section"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
+  html += '<label style="font-size:12px;color:var(--text3);">De</label>';
+  html += dpInput('tiro-rel-de', de);
+  html += '<label style="font-size:12px;color:var(--text3);">Ate</label>';
+  html += dpInput('tiro-rel-ate', ate);
+  html += '<button onclick="renderTiroRelatorio()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Filtrar</button>';
+  html += '</div></div>';
 
   // Contadores por tipo
   var contadores = { treino: 0, curso: 0, camp_interno: 0, camp_nacional: 0 };
