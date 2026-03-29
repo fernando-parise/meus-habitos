@@ -1,5 +1,110 @@
 // ========== HOBBIES APP - TIRO HIGH PERFORMANCE ==========
 
+// ========== DATE PICKER COMPONENT ==========
+var _dpActive = null;
+var _dpCallback = null;
+var _dpMonth = null;
+
+function dpOpen(inputId) {
+  var val = document.getElementById(inputId).value || dk(new Date());
+  var parts = val.split('-');
+  _dpMonth = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1);
+  _dpActive = inputId;
+  dpRender(val);
+}
+
+function dpRender(selected) {
+  var old = document.getElementById('dp-overlay');
+  if (old) old.remove();
+
+  var today = dk(new Date());
+  var m = _dpMonth;
+  var mNames = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var dNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+
+  var overlay = document.createElement('div');
+  overlay.id = 'dp-overlay';
+  overlay.onclick = function(e) { if (e.target === overlay) dpClose(); };
+
+  var box = document.createElement('div');
+  box.className = 'dp-box';
+
+  // Header
+  var h = '<div class="dp-header">';
+  h += '<button class="dp-nav" onclick="dpPrevMonth()">&lt;</button>';
+  h += '<span class="dp-title">' + mNames[m.getMonth()] + ' ' + m.getFullYear() + '</span>';
+  h += '<button class="dp-nav" onclick="dpNextMonth()">&gt;</button>';
+  h += '</div>';
+
+  // Day names
+  h += '<div class="dp-days">';
+  dNames.forEach(function(d) { h += '<div class="dp-dn">' + d + '</div>'; });
+  h += '</div>';
+
+  // Grid
+  h += '<div class="dp-grid">';
+  var fd = new Date(m.getFullYear(), m.getMonth(), 1);
+  var ld = new Date(m.getFullYear(), m.getMonth() + 1, 0);
+  for (var i = 0; i < fd.getDay(); i++) h += '<div class="dp-cell"></div>';
+  for (var d = 1; d <= ld.getDate(); d++) {
+    var iso = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    var cls = 'dp-cell dp-day';
+    if (iso === selected) cls += ' dp-sel';
+    if (iso === today) cls += ' dp-today';
+    h += '<div class="' + cls + '" onclick="dpSelect(\'' + iso + '\')">' + d + '</div>';
+  }
+  h += '</div>';
+
+  // Today button
+  h += '<div class="dp-footer">';
+  h += '<button class="dp-today-btn" onclick="dpSelect(\'' + today + '\')">Hoje</button>';
+  h += '</div>';
+
+  box.innerHTML = h;
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+function dpSelect(iso) {
+  if (_dpActive) {
+    document.getElementById(_dpActive).value = iso;
+    var display = document.getElementById(_dpActive + '-display');
+    if (display) display.textContent = dpFormatBR(iso);
+  }
+  dpClose();
+}
+
+function dpClose() {
+  var el = document.getElementById('dp-overlay');
+  if (el) el.remove();
+  _dpActive = null;
+}
+
+function dpPrevMonth() {
+  _dpMonth = new Date(_dpMonth.getFullYear(), _dpMonth.getMonth() - 1, 1);
+  var val = _dpActive ? document.getElementById(_dpActive).value : '';
+  dpRender(val);
+}
+
+function dpNextMonth() {
+  _dpMonth = new Date(_dpMonth.getFullYear(), _dpMonth.getMonth() + 1, 1);
+  var val = _dpActive ? document.getElementById(_dpActive).value : '';
+  dpRender(val);
+}
+
+function dpFormatBR(iso) {
+  if (!iso) return '';
+  var p = iso.split('-');
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+
+function dpInput(id, value) {
+  var display = dpFormatBR(value || dk(new Date()));
+  var val = value || dk(new Date());
+  return '<input type="hidden" id="' + id + '" value="' + val + '">' +
+    '<div id="' + id + '-display" class="dp-input" onclick="dpOpen(\'' + id + '\')">' + display + '</div>';
+}
+
 var TIRO_TIPOS_HAB = {
   treino: { label: 'Treino', color: 'var(--green)' },
   curso: { label: 'Curso', color: 'var(--blue)' },
@@ -152,7 +257,7 @@ function renderTiroMunicao() {
   html += '<div class="section"><div class="stitle">Nova compra</div>';
   html += '<div class="card" style="padding:14px;">';
   html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Data</label>';
-  html += '<input type="date" id="tiro-mun-data" value="' + dk(new Date()) + '" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
+  html += dpInput('tiro-mun-data', dk(new Date())) + '</div>';
   html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
   html += '<div style="flex:1;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Quantidade</label>';
   html += '<input type="number" id="tiro-mun-qtd" min="1" placeholder="50" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
@@ -225,7 +330,7 @@ function renderTiroHabitualidade() {
   html += '<div class="card" style="padding:14px;">';
   // Data
   html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Data</label>';
-  html += '<input type="date" id="tiro-hab-data" value="' + dk(new Date()) + '" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
+  html += dpInput('tiro-hab-data', dk(new Date())) + '</div>';
   // Tipo
   html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Tipo</label>';
   html += '<select id="tiro-hab-tipo" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;">';
