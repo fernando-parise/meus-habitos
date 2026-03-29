@@ -112,17 +112,23 @@ var TIRO_TIPOS_HAB = {
   camp_nacional: { label: 'Camp. Nacional', color: 'var(--gold)' }
 };
 
+var TIRO_ARMAS_DEFAULT = [
+  { id: 1, nome: 'Pistola 9mm', tipo: 'curta', calibre: '9mm', minha: true }
+];
+
 function initHobbies() {
   if (!DATA.hobbies) DATA.hobbies = {};
   if (!DATA.hobbies.tirohp) {
     DATA.hobbies.tirohp = {
       config: { cotaAnual: 500, calibre: '9mm' },
+      armas: JSON.parse(JSON.stringify(TIRO_ARMAS_DEFAULT)),
       compras: [],
       habitualidades: []
     };
   }
   var t = DATA.hobbies.tirohp;
   if (!t.config) t.config = { cotaAnual: 500, calibre: '9mm' };
+  if (!t.armas) t.armas = JSON.parse(JSON.stringify(TIRO_ARMAS_DEFAULT));
   if (!t.compras) t.compras = [];
   if (!t.habitualidades) t.habitualidades = [];
 }
@@ -138,14 +144,15 @@ function switchHobby(hobby) {
 }
 
 function switchTiroTab(tab, btn) {
-  ['painel', 'municao', 'habitualidade'].forEach(function(t) {
+  ['painel', 'municao', 'habitualidade', 'armas'].forEach(function(t) {
     document.getElementById('tiro-' + t).style.display = t === tab ? '' : 'none';
   });
-  btn.parentElement.querySelectorAll('.tab').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
+  document.querySelectorAll('#hobby-tirohp .tab').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
   if (tab === 'painel') renderTiroPainel();
   if (tab === 'municao') renderTiroMunicao();
   if (tab === 'habitualidade') renderTiroHabitualidade();
+  if (tab === 'armas') renderTiroArmas();
 }
 
 // ========== CALCULOS ==========
@@ -344,9 +351,17 @@ function renderTiroHabitualidade() {
   html += '<div style="flex:1;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Mun. clube</label>';
   html += '<input type="number" id="tiro-hab-clube" min="0" value="0" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
   html += '</div>';
-  // Armas clube
-  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Armas do clube usadas (opcional)</label>';
-  html += '<input type="text" id="tiro-hab-armas" placeholder="ex: 12ga, .357" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
+  // Armas
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Armas usadas</label>';
+  html += '<div id="tiro-hab-armas-list" style="display:flex;flex-wrap:wrap;gap:6px;">';
+  (t.armas || []).forEach(function(a) {
+    var label = a.nome + (a.minha ? '' : ' (clube)');
+    html += '<label style="display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);cursor:pointer;font-size:13px;color:var(--text2);">';
+    html += '<input type="checkbox" class="tiro-hab-arma-cb" value="' + a.id + '" style="accent-color:var(--green);"> ' + label + '</label>';
+  });
+  html += '</div>';
+  html += '<div style="margin-top:6px;"><a href="javascript:void(0)" onclick="switchTiroTab(\'armas\',document.querySelector(\'#hobby-tirohp .tab:last-child\'))" style="font-size:11px;color:var(--purple);">+ Gerenciar armas</a></div>';
+  html += '</div>';
   // Obs
   html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Obs (opcional)</label>';
   html += '<input type="text" id="tiro-hab-obs" placeholder="" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
@@ -364,7 +379,11 @@ function renderTiroHabitualidade() {
       var detalhes = [];
       if (h.munMinhas > 0) detalhes.push(h.munMinhas + ' mun. minhas');
       if (h.munClube > 0) detalhes.push(h.munClube + ' mun. clube');
-      if (h.armasClube) detalhes.push('Armas: ' + h.armasClube);
+      if (h.armas && h.armas.length > 0) {
+        var nomes = h.armas.map(function(aid) { return tiroGetArmaName(aid); }).join(', ');
+        detalhes.push(nomes);
+      }
+      if (h.armasClube) detalhes.push(h.armasClube); // backward compat
       html += '<div style="padding:12px 14px;border-bottom:0.5px solid var(--border);">';
       html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">';
       html += '<div style="font-size:12px;color:var(--text3);min-width:50px;">' + formatDateBR(h.data) + '</div>';
@@ -387,8 +406,12 @@ function tiroAddHabitualidade() {
   var tipo = document.getElementById('tiro-hab-tipo').value;
   var munMinhas = parseInt(document.getElementById('tiro-hab-minhas').value) || 0;
   var munClube = parseInt(document.getElementById('tiro-hab-clube').value) || 0;
-  var armasClube = document.getElementById('tiro-hab-armas').value.trim();
   var obs = document.getElementById('tiro-hab-obs').value.trim();
+  // Armas selecionadas
+  var armaIds = [];
+  document.querySelectorAll('.tiro-hab-arma-cb:checked').forEach(function(cb) {
+    armaIds.push(parseInt(cb.value));
+  });
   if (!dataVal) { alert('Informe a data.'); return; }
   if (munMinhas === 0 && munClube === 0) { alert('Informe a quantidade de municao usada.'); return; }
   var t = DATA.hobbies.tirohp;
@@ -398,7 +421,7 @@ function tiroAddHabitualidade() {
     tipo: tipo,
     munMinhas: munMinhas,
     munClube: munClube,
-    armasClube: armasClube,
+    armas: armaIds,
     obs: obs
   });
   saveData();
@@ -411,6 +434,83 @@ function tiroDeleteHabitualidade(id) {
   t.habitualidades = t.habitualidades.filter(function(h) { return h.id !== id; });
   saveData();
   renderTiroHabitualidade();
+}
+
+// ========== ARMAS ==========
+function tiroGetArmaName(id) {
+  var t = DATA.hobbies.tirohp;
+  var a = (t.armas || []).find(function(x) { return x.id === id; });
+  return a ? a.nome + (a.minha ? '' : ' (clube)') : 'Arma #' + id;
+}
+
+function renderTiroArmas() {
+  var t = DATA.hobbies.tirohp;
+  var html = '';
+
+  // Form nova arma
+  html += '<div class="section"><div class="stitle">Cadastrar arma</div>';
+  html += '<div class="card" style="padding:14px;">';
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Nome</label>';
+  html += '<input type="text" id="tiro-arma-nome" placeholder="ex: Pistola Glock G19" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
+  html += '<div style="flex:1;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Tipo</label>';
+  html += '<select id="tiro-arma-tipo" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;">';
+  html += '<option value="curta">Curta</option><option value="longa">Longa</option><option value="shotgun">Shotgun</option></select></div>';
+  html += '<div style="flex:1;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Calibre</label>';
+  html += '<input type="text" id="tiro-arma-calibre" placeholder="9mm" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
+  html += '</div>';
+  html += '<div style="margin-bottom:10px;"><label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;">';
+  html += '<input type="checkbox" id="tiro-arma-minha" checked style="accent-color:var(--green);"> Arma minha</label></div>';
+  html += '<button onclick="tiroAddArma()" style="width:100%;padding:10px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">Cadastrar</button>';
+  html += '</div></div>';
+
+  // Lista
+  html += '<div class="section"><div class="stitle">Armas cadastradas <span style="color:var(--text3);font-weight:400;">' + (t.armas || []).length + '</span></div>';
+  if (!t.armas || t.armas.length === 0) {
+    html += '<div class="card" style="padding:20px;text-align:center;color:var(--text3);font-size:13px;">Nenhuma arma cadastrada</div>';
+  } else {
+    html += '<div class="card">';
+    t.armas.forEach(function(a) {
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:0.5px solid var(--border);">';
+      html += '<div style="flex:1;">';
+      html += '<div style="font-size:14px;font-weight:500;color:var(--text);">' + a.nome + '</div>';
+      html += '<div style="font-size:12px;color:var(--text3);">' + a.tipo + ' &middot; ' + a.calibre + ' &middot; ' + (a.minha ? '<span style="color:var(--green);">minha</span>' : '<span style="color:var(--amber);">clube</span>') + '</div>';
+      html += '</div>';
+      html += '<button onclick="tiroDeleteArma(' + a.id + ')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px;">x</button>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  document.getElementById('tiro-armas-content').innerHTML = html;
+}
+
+function tiroAddArma() {
+  var nome = document.getElementById('tiro-arma-nome').value.trim();
+  var tipo = document.getElementById('tiro-arma-tipo').value;
+  var calibre = document.getElementById('tiro-arma-calibre').value.trim();
+  var minha = document.getElementById('tiro-arma-minha').checked;
+  if (!nome) { alert('Informe o nome da arma.'); return; }
+  if (!calibre) { alert('Informe o calibre.'); return; }
+  var t = DATA.hobbies.tirohp;
+  t.armas.push({
+    id: tiroNextId(t.armas),
+    nome: nome,
+    tipo: tipo,
+    calibre: calibre,
+    minha: minha
+  });
+  saveData();
+  renderTiroArmas();
+}
+
+function tiroDeleteArma(id) {
+  if (!confirm('Remover esta arma?')) return;
+  var t = DATA.hobbies.tirohp;
+  t.armas = t.armas.filter(function(a) { return a.id !== id; });
+  saveData();
+  renderTiroArmas();
 }
 
 // ========== CONFIG ==========
