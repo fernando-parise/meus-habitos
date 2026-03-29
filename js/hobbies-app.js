@@ -144,7 +144,7 @@ function switchHobby(hobby) {
 }
 
 function switchTiroTab(tab, btn) {
-  ['painel', 'municao', 'habitualidade', 'armas'].forEach(function(t) {
+  ['painel', 'municao', 'habitualidade', 'armas', 'relatorio'].forEach(function(t) {
     document.getElementById('tiro-' + t).style.display = t === tab ? '' : 'none';
   });
   document.querySelectorAll('#hobby-tirohp .tab').forEach(function(b) { b.classList.remove('active'); });
@@ -153,6 +153,7 @@ function switchTiroTab(tab, btn) {
   if (tab === 'municao') renderTiroMunicao();
   if (tab === 'habitualidade') renderTiroHabitualidade();
   if (tab === 'armas') renderTiroArmas();
+  if (tab === 'relatorio') renderTiroRelatorio();
 }
 
 // ========== CALCULOS ==========
@@ -439,6 +440,126 @@ function tiroDeleteHabitualidade(id) {
   t.habitualidades = t.habitualidades.filter(function(h) { return h.id !== id; });
   saveData();
   renderTiroHabitualidade();
+}
+
+// ========== RELATORIO ==========
+function renderTiroRelatorio() {
+  var t = DATA.hobbies.tirohp;
+  var habs = t.habitualidades.slice().sort(function(a, b) { return b.data.localeCompare(a.data); });
+
+  // Contadores por tipo
+  var contadores = { treino: 0, curso: 0, camp_interno: 0, camp_nacional: 0 };
+  var totalMunMinhas = 0, totalMunClube = 0;
+  habs.forEach(function(h) {
+    if (contadores[h.tipo] !== undefined) contadores[h.tipo]++;
+    totalMunMinhas += (h.munMinhas || 0);
+    totalMunClube += (h.munClube || 0);
+  });
+
+  var html = '';
+
+  // Resumo - cards de contagem
+  html += '<div class="section"><div class="stitle">Resumo</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">';
+  var tipos = [
+    { key: 'treino', label: 'Treinos', color: 'var(--green)' },
+    { key: 'curso', label: 'Cursos', color: 'var(--blue)' },
+    { key: 'camp_interno', label: 'Camp. Internos', color: 'var(--amber)' },
+    { key: 'camp_nacional', label: 'Camp. Nacionais', color: 'var(--gold)' }
+  ];
+  tipos.forEach(function(tp) {
+    html += '<div class="card" style="flex:1;min-width:70px;padding:12px;text-align:center;">';
+    html += '<div style="font-size:22px;font-weight:700;color:' + tp.color + ';">' + contadores[tp.key] + '</div>';
+    html += '<div style="font-size:11px;color:var(--text3);">' + tp.label + '</div></div>';
+  });
+  html += '</div>';
+  // Total geral + municao
+  html += '<div style="display:flex;gap:8px;">';
+  html += '<div class="card" style="flex:1;padding:12px;text-align:center;">';
+  html += '<div style="font-size:22px;font-weight:700;color:var(--text);">' + habs.length + '</div>';
+  html += '<div style="font-size:11px;color:var(--text3);">Total idas</div></div>';
+  html += '<div class="card" style="flex:1;padding:12px;text-align:center;">';
+  html += '<div style="font-size:22px;font-weight:700;color:var(--purple);">' + totalMunMinhas + '</div>';
+  html += '<div style="font-size:11px;color:var(--text3);">Mun. minhas</div></div>';
+  html += '<div class="card" style="flex:1;padding:12px;text-align:center;">';
+  html += '<div style="font-size:22px;font-weight:700;color:var(--orange);">' + totalMunClube + '</div>';
+  html += '<div style="font-size:11px;color:var(--text3);">Mun. clube</div></div>';
+  html += '</div></div>';
+
+  // Por calibre
+  var porCalibre = {};
+  habs.forEach(function(h) {
+    if (h.armas && h.armas.length > 0) {
+      h.armas.forEach(function(aid) {
+        var arma = (t.armas || []).find(function(a) { return a.id === aid; });
+        var cal = arma ? arma.calibre : 'Desconhecido';
+        if (!porCalibre[cal]) porCalibre[cal] = { idas: 0, munMinhas: 0, munClube: 0 };
+        porCalibre[cal].idas++;
+        // Distribui municao proporcional entre armas (simplificado: divide igual)
+      });
+    }
+    // Atribui municao ao calibre principal se so uma arma
+    if (h.armas && h.armas.length === 1) {
+      var arma = (t.armas || []).find(function(a) { return a.id === h.armas[0]; });
+      var cal = arma ? arma.calibre : 'Desconhecido';
+      if (!porCalibre[cal]) porCalibre[cal] = { idas: 0, munMinhas: 0, munClube: 0 };
+      porCalibre[cal].munMinhas += (h.munMinhas || 0);
+      porCalibre[cal].munClube += (h.munClube || 0);
+    } else if (!h.armas || h.armas.length === 0) {
+      var cal = t.config.calibre || '9mm';
+      if (!porCalibre[cal]) porCalibre[cal] = { idas: 0, munMinhas: 0, munClube: 0 };
+      porCalibre[cal].idas++;
+      porCalibre[cal].munMinhas += (h.munMinhas || 0);
+      porCalibre[cal].munClube += (h.munClube || 0);
+    }
+  });
+  var calKeys = Object.keys(porCalibre);
+  if (calKeys.length > 0) {
+    html += '<div class="section"><div class="stitle">Por calibre</div>';
+    html += '<div class="card">';
+    calKeys.forEach(function(cal) {
+      var c = porCalibre[cal];
+      html += '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:0.5px solid var(--border);">';
+      html += '<div style="font-size:15px;font-weight:600;color:var(--text);min-width:60px;">' + cal + '</div>';
+      html += '<div style="flex:1;display:flex;gap:16px;font-size:12px;color:var(--text2);">';
+      html += '<span>' + c.idas + ' idas</span>';
+      if (c.munMinhas > 0) html += '<span style="color:var(--purple);">' + c.munMinhas + ' mun. minhas</span>';
+      if (c.munClube > 0) html += '<span style="color:var(--orange);">' + c.munClube + ' mun. clube</span>';
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  // Lista completa
+  html += '<div class="section"><div class="stitle">Todas as habitualidades <span style="color:var(--text3);font-weight:400;">' + habs.length + '</span></div>';
+  if (habs.length === 0) {
+    html += '<div class="card" style="padding:20px;text-align:center;color:var(--text3);font-size:13px;">Nenhuma atividade registrada</div>';
+  } else {
+    html += '<div class="card">';
+    habs.forEach(function(h) {
+      var info = TIRO_TIPOS_HAB[h.tipo] || { label: h.tipo, color: 'var(--text2)' };
+      var detalhes = [];
+      if (h.munMinhas > 0) detalhes.push(h.munMinhas + ' mun. minhas');
+      if (h.munClube > 0) detalhes.push(h.munClube + ' mun. clube');
+      if (h.armas && h.armas.length > 0) {
+        detalhes.push(h.armas.map(function(aid) { return tiroGetArmaName(aid); }).join(', '));
+      }
+      if (h.armasClube) detalhes.push(h.armasClube);
+      html += '<div style="padding:12px 14px;border-bottom:0.5px solid var(--border);">';
+      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:' + (detalhes.length > 0 || h.obs ? '4px' : '0') + ';">';
+      html += '<div style="font-size:12px;color:var(--text3);min-width:50px;">' + formatDateBR(h.data) + '</div>';
+      html += '<span style="font-size:11px;padding:2px 8px;border-radius:4px;background:' + info.color + '22;color:' + info.color + ';font-weight:600;">' + info.label + '</span>';
+      if (h.semDesconto) html += '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--amber)22;color:var(--amber);">retroativo</span>';
+      html += '</div>';
+      if (detalhes.length > 0) html += '<div style="font-size:12px;color:var(--text2);padding-left:62px;">' + detalhes.join(' &middot; ') + '</div>';
+      if (h.obs) html += '<div style="font-size:12px;color:var(--text3);padding-left:62px;font-style:italic;">' + h.obs + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  document.getElementById('tiro-relatorio-content').innerHTML = html;
 }
 
 // ========== ARMAS ==========
