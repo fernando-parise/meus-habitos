@@ -413,7 +413,6 @@ function tiroAddHabitualidade() {
     armaIds.push(parseInt(cb.value));
   });
   if (!dataVal) { alert('Informe a data.'); return; }
-  if (munMinhas === 0 && munClube === 0) { alert('Informe a quantidade de municao usada.'); return; }
   var t = DATA.hobbies.tirohp;
   t.habitualidades.push({
     id: tiroNextId(t.habitualidades),
