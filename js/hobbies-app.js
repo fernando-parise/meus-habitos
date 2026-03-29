@@ -173,7 +173,7 @@ function tiroCalcEstoque() {
     if (c.tipo === 'treino') treino += c.qtd;
     else if (c.tipo === 'defesa') defesa += c.qtd;
   });
-  t.habitualidades.forEach(function(h) { gastas += (h.munMinhas || 0); });
+  t.habitualidades.forEach(function(h) { if (!h.semDesconto) gastas += (h.munMinhas || 0); });
   treino = Math.max(0, treino - gastas);
   return { treino: treino, defesa: defesa, total: treino + defesa };
 }
@@ -365,6 +365,9 @@ function renderTiroHabitualidade() {
   // Obs
   html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Obs (opcional)</label>';
   html += '<input type="text" id="tiro-hab-obs" placeholder="" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
+  // Nao descontar
+  html += '<div style="margin-bottom:12px;"><label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--amber);cursor:pointer;">';
+  html += '<input type="checkbox" id="tiro-hab-semdesc" style="accent-color:var(--amber);"> Nao descontar do estoque (registro retroativo)</label></div>';
   html += '<button onclick="tiroAddHabitualidade()" style="width:100%;padding:10px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">Registrar</button>';
   html += '</div></div>';
 
@@ -407,6 +410,7 @@ function tiroAddHabitualidade() {
   var munMinhas = parseInt(document.getElementById('tiro-hab-minhas').value) || 0;
   var munClube = parseInt(document.getElementById('tiro-hab-clube').value) || 0;
   var obs = document.getElementById('tiro-hab-obs').value.trim();
+  var semDesc = document.getElementById('tiro-hab-semdesc').checked;
   // Armas selecionadas
   var armaIds = [];
   document.querySelectorAll('.tiro-hab-arma-cb:checked').forEach(function(cb) {
@@ -414,7 +418,7 @@ function tiroAddHabitualidade() {
   });
   if (!dataVal) { alert('Informe a data.'); return; }
   var t = DATA.hobbies.tirohp;
-  t.habitualidades.push({
+  var entry = {
     id: tiroNextId(t.habitualidades),
     data: dataVal,
     tipo: tipo,
@@ -422,7 +426,9 @@ function tiroAddHabitualidade() {
     munClube: munClube,
     armas: armaIds,
     obs: obs
-  });
+  };
+  if (semDesc) entry.semDesconto = true;
+  t.habitualidades.push(entry);
   saveData();
   renderTiroHabitualidade();
 }
