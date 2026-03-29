@@ -10,7 +10,7 @@ async function initBible() {
   // Load full bible data
   if (!BIBLE) {
     try {
-      const r = await fetch('/js/biblia-completa.json');
+      const r = await fetch('js/biblia-completa.json');
       BIBLE = await r.json();
     } catch (e) {
       console.error('Erro ao carregar biblia:', e);
