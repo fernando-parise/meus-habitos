@@ -219,6 +219,9 @@ function renderTiroHabitualidade() {
   // Form
   html += '<div class="section"><div class="stitle">Registrar ida ao clube</div>';
   html += '<div class="card" style="padding:14px;">';
+  // Data
+  html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Data</label>';
+  html += '<input type="date" id="tiro-hab-data" value="' + dk(new Date()) + '" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></div>';
   // Tipo
   html += '<div style="margin-bottom:10px;"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Tipo</label>';
   html += '<select id="tiro-hab-tipo" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;">';
@@ -271,16 +274,18 @@ function renderTiroHabitualidade() {
 }
 
 function tiroAddHabitualidade() {
+  var dataVal = document.getElementById('tiro-hab-data').value;
   var tipo = document.getElementById('tiro-hab-tipo').value;
   var munMinhas = parseInt(document.getElementById('tiro-hab-minhas').value) || 0;
   var munClube = parseInt(document.getElementById('tiro-hab-clube').value) || 0;
   var armasClube = document.getElementById('tiro-hab-armas').value.trim();
   var obs = document.getElementById('tiro-hab-obs').value.trim();
+  if (!dataVal) { alert('Informe a data.'); return; }
   if (munMinhas === 0 && munClube === 0) { alert('Informe a quantidade de municao usada.'); return; }
   var t = DATA.hobbies.tirohp;
   t.habitualidades.push({
     id: tiroNextId(t.habitualidades),
-    data: dk(new Date()),
+    data: dataVal,
     tipo: tipo,
     munMinhas: munMinhas,
     munClube: munClube,

@@ -24,11 +24,11 @@ const DEFAULT_HABITS=[
   {id:'biblia',name:'Leitura biblica',icon:'\u271D\uFE0F',section:'pessoal'},
   {id:'leidatracao',name:'Lei da atracao',icon:'\u2728',section:'pessoal'},
   {id:'creatina',name:'Creatina',icon:'\uD83D\uDC8A',section:'saude'},
-  {id:'pretreino',name:'Pre-treino',icon:'\u26A1',section:'saude'},
+  {id:'pretreino',name:'Pre-treino',icon:'\u26A1',section:'saude',defaultSkip:'sem_aula'},
   {id:'vitaminas',name:'Vitaminas',icon:'\uD83C\uDF3F',section:'saude'},
   {id:'academia',name:'Academia',icon:'\uD83C\uDFCB\uFE0F',section:'treino'},
-  {id:'muaythai',name:'Muay Thai',icon:'\uD83E\uDD4A',section:'treino'},
-  {id:'tiro',name:'Tiro esportivo',icon:'\uD83C\uDFAF',section:'treino'},
+  {id:'muaythai',name:'Muay Thai',icon:'\uD83E\uDD4A',section:'treino',defaultSkip:'sem_aula'},
+  {id:'tiro',name:'Tiro esportivo',icon:'\uD83C\uDFAF',section:'treino',defaultSkip:'sem_aula'},
   {id:'alongamento',name:'Alongamento',icon:'\uD83E\uDD38',section:'treino'},
   {id:'acucar',name:'Alimentos com acucar',icon:'\uD83C\uDF6C',section:'ruim'},
   {id:'bolacha',name:'Consumiu bolachas',icon:'\uD83C\uDF6A',section:'ruim'},
@@ -161,7 +161,22 @@ function migrateFromLocalStorage(){
 
 // ========== DADOS BASICOS ==========
 function dk(d){return d.toISOString().split('T')[0];}
-function ld(d){return DATA.days[dk(d)]||{};}
+function ld(d){
+  var k=dk(d),data=DATA.days[k];
+  if(!data){
+    data={};
+    // Apply default skips for new days
+    var habits=getAllHabits();
+    for(var i=0;i<habits.length;i++){
+      if(habits[i].defaultSkip){
+        if(!data._skips)data._skips={};
+        data._skips[habits[i].id]=habits[i].defaultSkip;
+      }
+    }
+    DATA.days[k]=data;
+  }
+  return data;
+}
 function sd(d,v){DATA.days[dk(d)]=v;saveData();}
 function PS(){return new Date(DATA.project_start+'T00:00:00');}
 

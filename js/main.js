@@ -24,6 +24,13 @@ async function loadData() {
   if (!DATA.project_start) { var t = new Date(); t.setHours(0, 0, 0, 0); DATA.project_start = dk(t); }
   if (!DATA.usage_start) { var t = new Date(); t.setHours(0, 0, 0, 0); DATA.usage_start = dk(t); }
   if (!DATA.habits || DATA.habits.length === 0) { DATA.habits = JSON.parse(JSON.stringify(DEFAULT_HABITS)); saveData(); }
+  // Sync defaultSkip from DEFAULT_HABITS to saved habits
+  DEFAULT_HABITS.forEach(function(dh) {
+    if (dh.defaultSkip) {
+      var h = DATA.habits.find(function(x) { return x.id === dh.id; });
+      if (h && !h.defaultSkip) { h.defaultSkip = dh.defaultSkip; }
+    }
+  });
   if (!DATA.bible) DATA.bible = { currentDayIdx: 0, quickNote: '', diary: '' };
   if (!DATA.loa) DATA.loa = { affirmations: [], done: {} };
   if (!DATA.hobbies) DATA.hobbies = {};
