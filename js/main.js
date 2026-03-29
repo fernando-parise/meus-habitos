@@ -26,12 +26,14 @@ async function loadData() {
   if (!DATA.habits || DATA.habits.length === 0) { DATA.habits = JSON.parse(JSON.stringify(DEFAULT_HABITS)); saveData(); }
   if (!DATA.bible) DATA.bible = { currentDayIdx: 0, quickNote: '', diary: '' };
   if (!DATA.loa) DATA.loa = { affirmations: [], done: {} };
+  if (!DATA.hobbies) DATA.hobbies = {};
 
   hideSetup();
   checkMigration();
   renderDaily();
   initBible();
   initLoa();
+  initHobbies();
 }
 
 function saveData() {
@@ -103,7 +105,7 @@ function ghDisconnect() {
 
 // ========== APP NAVIGATION ==========
 function switchApp(app, btn) {
-  ['habitos', 'biblia', 'loa'].forEach(function(a) {
+  ['habitos', 'biblia', 'loa', 'hobbies'].forEach(function(a) {
     document.getElementById('app-' + a).style.display = a === app ? '' : 'none';
   });
   document.querySelectorAll('.app-nav-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -112,6 +114,7 @@ function switchApp(app, btn) {
   if (app === 'habitos') renderDaily();
   if (app === 'biblia') renderBibleHoje();
   if (app === 'loa') renderLoaHoje();
+  if (app === 'hobbies') renderTiroPainel();
 }
 
 // ========== INIT ==========

@@ -39,6 +39,11 @@
   .stitle{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
   .card{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:4px;}
 
+  /* ===== HOBBIES ===== */
+  .hobby-menu-btn{padding:8px 16px;border-radius:8px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;}
+  .hobby-menu-btn.active{background:var(--purple);border-color:var(--purple);color:#fff;font-weight:600;}
+  .hobby-menu-btn:hover:not(.active){border-color:var(--purple);color:var(--purple);}
+
   /* ===== HABITOS - items ===== */
   .hi{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background .1s;}
   .hi:last-child{border-bottom:none;}
@@ -366,6 +371,7 @@
     <button class="app-nav-btn active" onclick="switchApp('habitos',this)">Habitos</button>
     <button class="app-nav-btn" onclick="switchApp('biblia',this)">Estudo Biblico</button>
     <button class="app-nav-btn" onclick="switchApp('loa',this)">Lei da Atracao</button>
+    <button class="app-nav-btn" onclick="switchApp('hobbies',this)">Hobbies</button>
   </nav>
 
   <!-- ==================== APP: HABITOS ==================== -->
@@ -660,6 +666,34 @@
     </div>
   </div>
 
+  <!-- ==================== APP: HOBBIES ==================== -->
+  <div id="app-hobbies" style="display:none">
+    <div class="header">
+      <div>
+        <h1>Hobbies</h1>
+        <span class="header-sub">Seus hobbies e atividades</span>
+      </div>
+    </div>
+
+    <!-- Hobby selector -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;">
+      <button class="hobby-menu-btn active" onclick="switchHobby('tirohp')">Tiro HP</button>
+    </div>
+
+    <!-- Tiro HP -->
+    <div id="hobby-tirohp" class="hobby-panel">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTiroTab('painel',this)">Painel</button>
+        <button class="tab" onclick="switchTiroTab('municao',this)">Municao</button>
+        <button class="tab" onclick="switchTiroTab('habitualidade',this)">Habitualidade</button>
+      </div>
+
+      <div id="tiro-painel"><div id="tiro-painel-content"></div></div>
+      <div id="tiro-municao" style="display:none"><div id="tiro-municao-content"></div></div>
+      <div id="tiro-habitualidade" style="display:none"><div id="tiro-habitualidade-content"></div></div>
+    </div>
+  </div>
+
 </div>
 
 
@@ -668,6 +702,7 @@
 <script src="js/habitos-app.js"></script>
 <script src="js/bible-app.js"></script>
 <script src="js/loa-app.js"></script>
+<script src="js/hobbies-app.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
