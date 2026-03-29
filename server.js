@@ -47,7 +47,7 @@ const server = http.createServer((req, res) => {
   }
 
   // Servir arquivos estaticos
-  let filePath = req.url === '/' ? '/habitos.html' : req.url;
+  let filePath = req.url === '/' ? '/index.html' : req.url;
   filePath = path.join(DIR, filePath);
   const ext = path.extname(filePath);
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
