@@ -228,20 +228,51 @@ function deleteHabit(id){
 
 // ========== IMPORTACAO ==========
 function resolveKey(raw){const r=raw.toLowerCase().trim();for(const[k,aliases]of Object.entries(KEY_MAP)){if(aliases.some(a=>r===a||r.includes(a)))return k;}return r;}
+function parseSingleMacro(line){
+  if(!line.startsWith('MACRO:'))return null;
+  const parts=line.slice(6).split('|');if(parts.length<5)return null;
+  const key=resolveKey(parts[0]);const bloco=BL.find(b=>b.key===key);
+  if(!bloco)return null;
+  return{key,multi:bloco.multi,label:bloco.label,icon:bloco.icon,desc:parts.slice(5).join('|')||parts[0],kcal:parseInt(parts[1])||0,prot:parseInt(parts[2])||0,carb:parseInt(parts[3])||0,gord:parseInt(parts[4])||0};
+}
+let pendingMulti=null;
 function parseImport(){
   const raw=document.getElementById('importInput').value.trim();
   if(!raw){alert('Cole o codigo MACRO: primeiro.');return;}
-  if(!raw.startsWith('MACRO:')){alert('Formato invalido.');return;}
-  const parts=raw.slice(6).split('|');if(parts.length<5){alert('Codigo incompleto.');return;}
-  const key=resolveKey(parts[0]);const bloco=BL.find(b=>b.key===key);
-  if(!bloco){alert('Refeicao "'+parts[0]+'" nao reconhecida.');return;}
-  pendingImport={key,multi:bloco.multi,desc:parts.slice(5).join('|')||parts[0],kcal:parseInt(parts[1])||0,prot:parseInt(parts[2])||0,carb:parseInt(parts[3])||0,gord:parseInt(parts[4])||0};
-  document.getElementById('modalDesc').textContent='"'+pendingImport.desc+'" -> '+bloco.label;
-  document.getElementById('mKcal').value=pendingImport.kcal;document.getElementById('mProt').value=pendingImport.prot;
-  document.getElementById('mCarb').value=pendingImport.carb;document.getElementById('mGord').value=pendingImport.gord;
-  document.getElementById('modalOv').classList.add('show');
+  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  if(lines.length===1){
+    if(!raw.startsWith('MACRO:')){alert('Formato invalido.');return;}
+    const p=parseSingleMacro(raw);
+    if(!p){alert('Codigo incompleto ou refeicao nao reconhecida.');return;}
+    pendingImport={key:p.key,multi:p.multi,desc:p.desc,kcal:p.kcal,prot:p.prot,carb:p.carb,gord:p.gord};
+    document.getElementById('modalDesc').textContent='"'+p.desc+'" -> '+p.label;
+    document.getElementById('mKcal').value=p.kcal;document.getElementById('mProt').value=p.prot;
+    document.getElementById('mCarb').value=p.carb;document.getElementById('mGord').value=p.gord;
+    document.getElementById('modalOv').classList.add('show');
+    return;
+  }
+  const parsed=[];const errors=[];
+  lines.forEach((line,i)=>{
+    const p=parseSingleMacro(line);
+    if(p)parsed.push(p);else errors.push('Linha '+(i+1)+': '+line);
+  });
+  if(parsed.length===0){alert('Nenhuma linha MACRO valida encontrada.');return;}
+  pendingMulti=parsed;
+  document.getElementById('multiSub').textContent=parsed.length+' refeicoes encontradas'+(errors.length?' ('+errors.length+' ignoradas)':'');
+  let html='';let tK=0,tP=0,tC=0,tG=0;
+  parsed.forEach(p=>{
+    tK+=p.kcal;tP+=p.prot;tC+=p.carb;tG+=p.gord;
+    html+='<div class="multi-item"><div class="multi-item-hdr"><span class="multi-item-meal">'+p.icon+' '+p.label+'</span></div>'
+      +'<div class="multi-item-desc">'+p.desc+'</div>'
+      +'<div class="multi-item-macros"><span class="mk">'+p.kcal+' kcal</span><span class="mp2">P '+p.prot+'g</span><span class="mc">C '+p.carb+'g</span><span class="mg">G '+p.gord+'g</span></div></div>';
+  });
+  if(errors.length)errors.forEach(e=>{html+='<div class="multi-err">'+e+'</div>';});
+  document.getElementById('multiList').innerHTML=html;
+  document.getElementById('multiTotal').innerHTML='<span class="mk">'+tK+' kcal</span><span class="mp2">P '+tP+'g</span><span class="mc">C '+tC+'g</span><span class="mg">G '+tG+'g</span>';
+  document.getElementById('modalMultiOv').classList.add('show');
 }
 function closeModal(){document.getElementById('modalOv').classList.remove('show');pendingImport=null;}
+function closeMultiModal(){document.getElementById('modalMultiOv').classList.remove('show');pendingMulti=null;}
 function confirmImport(){
   if(!pendingImport)return;
   const{key,multi,desc}=pendingImport;
@@ -251,6 +282,16 @@ function confirmImport(){
   const item={id:Date.now(),desc,macros:{kcal,prot_g:prot,carb_g:carb,gord_g:gord,obs:''}};
   if(!multi){d['ref_'+key]=[item];}else{d['ref_'+key].push(item);}
   sd(cur,d);document.getElementById('importInput').value='';closeModal();renderRefs();
+}
+function confirmMultiImport(){
+  if(!pendingMulti||!pendingMulti.length)return;
+  const d=ld(cur);
+  pendingMulti.forEach((p,i)=>{
+    if(!d['ref_'+p.key])d['ref_'+p.key]=[];
+    const item={id:Date.now()+i,desc:p.desc,macros:{kcal:p.kcal,prot_g:p.prot,carb_g:p.carb,gord_g:p.gord,obs:''}};
+    if(!p.multi){d['ref_'+p.key]=[item];}else{d['ref_'+p.key].push(item);}
+  });
+  sd(cur,d);document.getElementById('importInput').value='';closeMultiModal();renderRefs();
 }
 
 // ========== REFEICOES ==========

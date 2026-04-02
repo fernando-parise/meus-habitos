@@ -181,6 +181,15 @@
   .modal-btns{display:flex;gap:8px;}
   .modal-cancel{flex:1;padding:11px;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:14px;color:var(--text2);}
   .modal-confirm{flex:2;padding:11px;border:none;border-radius:8px;background:var(--green);cursor:pointer;font-size:14px;font-weight:700;color:#fff;}
+  .multi-list{max-height:50vh;overflow-y:auto;margin-bottom:16px;}
+  .multi-item{padding:10px 12px;background:var(--bg3);border-radius:8px;margin-bottom:6px;}
+  .multi-item-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .multi-item-meal{font-size:13px;font-weight:600;color:var(--green);}
+  .multi-item-desc{font-size:12px;color:var(--text2);font-style:italic;}
+  .multi-item-macros{display:flex;gap:8px;font-size:11px;font-weight:600;}
+  .multi-item-macros .mk{color:var(--orange);}.multi-item-macros .mp2{color:var(--green);}.multi-item-macros .mc{color:var(--amber);}.multi-item-macros .mg{color:var(--blue);}
+  .multi-total{display:flex;gap:10px;justify-content:center;padding:10px;background:var(--bg3);border-radius:8px;font-size:13px;font-weight:700;margin-bottom:14px;}
+  .multi-err{font-size:11px;color:var(--red);margin-top:4px;}
 
   /* ===== HABITOS - refeicoes ===== */
   .ref-b{border-bottom:0.5px solid var(--border);}
@@ -345,7 +354,7 @@
 </head>
 <body>
 
-<!-- Modal refeicao -->
+<!-- Modal refeicao (single) -->
 <div class="modal-ov" id="modalOv">
   <div class="modal">
     <div class="modal-title">Confirmar refeicao</div>
@@ -360,6 +369,20 @@
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
       <button class="modal-confirm" onclick="confirmImport()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal refeicao (multi) -->
+<div class="modal-ov" id="modalMultiOv">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-title">Importar refeicoes</div>
+    <div class="modal-sub" id="multiSub"></div>
+    <div class="multi-list" id="multiList"></div>
+    <div class="multi-total" id="multiTotal"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeMultiModal()">Cancelar</button>
+      <button class="modal-confirm" onclick="confirmMultiImport()">Salvar tudo</button>
     </div>
   </div>
 </div>
@@ -430,8 +453,8 @@
 
       <div class="import-box">
         <div class="import-title">Importar refeicao do Claude</div>
-        <div class="import-hint">Cole aqui o codigo que o Claude vai te dar.<br>Formato: <strong>MACRO:refeicao|kcal|prot|carb|gord|descricao</strong></div>
-        <textarea class="import-ta" id="importInput" rows="2" placeholder="Cole o codigo MACRO: aqui..."></textarea>
+        <div class="import-hint">Cole aqui o codigo que o Claude vai te dar. Aceita varias linhas de uma vez!<br>Formato: <strong>MACRO:refeicao|kcal|prot|carb|gord|descricao</strong></div>
+        <textarea class="import-ta" id="importInput" rows="3" placeholder="Cole um ou mais codigos MACRO: aqui..."></textarea>
         <button class="import-btn" onclick="parseImport()">Importar e verificar</button>
       </div>
 
