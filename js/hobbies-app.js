@@ -338,8 +338,8 @@ function renderTiroHabitualidade() {
   html += '<div class="section">';
   html += '<div class="card" style="padding:16px;border-color:var(--purple-dim);border-width:1px;">';
   html += '<div style="font-size:13px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Importar habitualidade do Claude</div>';
-  html += '<div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Cole aqui o codigo que o Claude vai te dar.<br>Formato: TIRO:data|tipo|munMinhas|munClube|armaIds|obs</div>';
-  html += '<textarea id="tiro-import-input" rows="2" placeholder="Cole o codigo TIRO: aqui..." style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-family:monospace;resize:vertical;margin-bottom:10px;"></textarea>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Cole aqui o codigo que o Claude vai te dar. Aceita varias linhas de uma vez!<br>Formato: TIRO:data|tipo|munMinhas|munClube|armaIds|obs</div>';
+  html += '<textarea id="tiro-import-input" rows="3" placeholder="Cole um ou mais codigos TIRO: aqui..." style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-family:monospace;resize:vertical;margin-bottom:10px;"></textarea>';
   html += '<button onclick="tiroParseImport()" style="width:100%;padding:12px;border-radius:8px;border:none;background:var(--purple);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Importar e verificar</button>';
   html += '</div></div>';
 
@@ -679,62 +679,107 @@ function tiroDeleteArma(id) {
 // Exemplo: TIRO:2026-03-28|treino|50|0|1,2|Treino de sacada|0
 // armaIds: ids separados por virgula (ou vazio)
 // semDesconto: 1 = retroativo (nao desconta), 0 ou vazio = normal
-function tiroParseImport() {
-  var raw = document.getElementById('tiro-import-input').value.trim();
-  if (!raw) { alert('Cole o codigo TIRO: primeiro.'); return; }
-  if (!raw.startsWith('TIRO:')) { alert('Formato invalido. Deve comecar com TIRO:'); return; }
-  var parts = raw.slice(5).split('|');
-  if (parts.length < 2) { alert('Codigo incompleto.'); return; }
-
+function tiroParseOneLine(line) {
+  if (!line.startsWith('TIRO:')) return null;
+  var parts = line.slice(5).split('|');
+  if (parts.length < 2) return null;
   var data = parts[0] || dk(new Date());
   var tipo = parts[1] || 'treino';
+  var tiposValidos = ['treino', 'curso', 'camp_interno', 'camp_nacional'];
+  if (tiposValidos.indexOf(tipo) === -1) return null;
   var munMinhas = parseInt(parts[2]) || 0;
   var munClube = parseInt(parts[3]) || 0;
   var armaIds = parts[4] ? parts[4].split(',').map(function(x) { return parseInt(x.trim()); }).filter(function(x) { return !isNaN(x); }) : [];
   var obs = parts[5] || '';
   var semDesc = parts[6] === '1';
+  var tipoLabels = { treino: 'Treino', curso: 'Curso', camp_interno: 'Camp. Interno', camp_nacional: 'Camp. Nacional' };
+  return { data: data, tipo: tipo, tipoLabel: tipoLabels[tipo] || tipo, munMinhas: munMinhas, munClube: munClube, armaIds: armaIds, obs: obs, semDesc: semDesc };
+}
+var pendingTiroMulti = null;
+function tiroParseImport() {
+  var raw = document.getElementById('tiro-import-input').value.trim();
+  if (!raw) { alert('Cole o codigo TIRO: primeiro.'); return; }
+  var lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
 
-  // Validate tipo
-  var tiposValidos = ['treino', 'curso', 'camp_interno', 'camp_nacional'];
-  if (tiposValidos.indexOf(tipo) === -1) {
-    alert('Tipo invalido: ' + tipo + '. Use: ' + tiposValidos.join(', '));
+  if (lines.length === 1) {
+    // Single line: populate form for review (original behavior)
+    if (!raw.startsWith('TIRO:')) { alert('Formato invalido. Deve comecar com TIRO:'); return; }
+    var p = tiroParseOneLine(raw);
+    if (!p) { alert('Codigo incompleto ou tipo invalido.'); return; }
+
+    var dataInput = document.getElementById('tiro-hab-data');
+    var dataDisplay = document.getElementById('tiro-hab-data-display');
+    if (dataInput) dataInput.value = p.data;
+    if (dataDisplay) dataDisplay.textContent = dpFormatBR(p.data);
+    var tipoSel = document.getElementById('tiro-hab-tipo');
+    if (tipoSel) tipoSel.value = p.tipo;
+    var minhasInput = document.getElementById('tiro-hab-minhas');
+    var clubeInput = document.getElementById('tiro-hab-clube');
+    if (minhasInput) minhasInput.value = p.munMinhas;
+    if (clubeInput) clubeInput.value = p.munClube;
+    document.querySelectorAll('.tiro-hab-arma-cb').forEach(function(cb) {
+      cb.checked = p.armaIds.indexOf(parseInt(cb.value)) !== -1;
+    });
+    var obsInput = document.getElementById('tiro-hab-obs');
+    if (obsInput) obsInput.value = p.obs;
+    var semDescCb = document.getElementById('tiro-hab-semdesc');
+    if (semDescCb) semDescCb.checked = p.semDesc;
+    document.getElementById('tiro-import-input').value = '';
+    var formCard = dataInput ? dataInput.closest('.section') : null;
+    if (formCard) {
+      formCard.style.transition = 'box-shadow .3s';
+      formCard.style.boxShadow = '0 0 0 2px var(--purple)';
+      setTimeout(function() { formCard.style.boxShadow = ''; }, 1500);
+      formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     return;
   }
 
-  // Populate form fields for review
-  var dataInput = document.getElementById('tiro-hab-data');
-  var dataDisplay = document.getElementById('tiro-hab-data-display');
-  if (dataInput) dataInput.value = data;
-  if (dataDisplay) dataDisplay.textContent = dpFormatBR(data);
-
-  var tipoSel = document.getElementById('tiro-hab-tipo');
-  if (tipoSel) tipoSel.value = tipo;
-
-  var minhasInput = document.getElementById('tiro-hab-minhas');
-  var clubeInput = document.getElementById('tiro-hab-clube');
-  if (minhasInput) minhasInput.value = munMinhas;
-  if (clubeInput) clubeInput.value = munClube;
-
-  document.querySelectorAll('.tiro-hab-arma-cb').forEach(function(cb) {
-    cb.checked = armaIds.indexOf(parseInt(cb.value)) !== -1;
+  // Multi-line: show summary modal
+  var parsed = []; var errors = [];
+  lines.forEach(function(line, i) {
+    var p = tiroParseOneLine(line);
+    if (p) parsed.push(p); else errors.push('Linha ' + (i + 1) + ': ' + line);
   });
+  if (parsed.length === 0) { alert('Nenhuma linha TIRO valida encontrada.'); return; }
+  pendingTiroMulti = parsed;
 
-  var obsInput = document.getElementById('tiro-hab-obs');
-  if (obsInput) obsInput.value = obs;
+  var t = DATA.hobbies.tirohp;
+  var armaMap = {};
+  (t.armas || []).forEach(function(a) { armaMap[a.id] = a.nome; });
 
-  var semDescCb = document.getElementById('tiro-hab-semdesc');
-  if (semDescCb) semDescCb.checked = semDesc;
-
+  document.getElementById('tiroMultiSub').textContent = parsed.length + ' atividades encontradas' + (errors.length ? ' (' + errors.length + ' ignoradas)' : '');
+  var html = ''; var totalMinhas = 0; var totalClube = 0;
+  parsed.forEach(function(p) {
+    totalMinhas += p.munMinhas; totalClube += p.munClube;
+    var armasStr = p.armaIds.map(function(id) { return armaMap[id] || 'Arma #' + id; }).join(', ') || '-';
+    html += '<div class="multi-item" style="border-left:3px solid var(--purple);">';
+    html += '<div class="multi-item-hdr"><span class="multi-item-meal" style="color:var(--purple);">' + p.tipoLabel + '</span><span style="font-size:11px;color:var(--text3);">' + dpFormatBR(p.data) + '</span></div>';
+    if (p.obs) html += '<div class="multi-item-desc">' + p.obs + '</div>';
+    html += '<div class="multi-item-macros"><span style="color:var(--orange);">Minhas: ' + p.munMinhas + '</span><span style="color:var(--blue);">Clube: ' + p.munClube + '</span><span style="color:var(--text3);">' + armasStr + '</span></div>';
+    html += '</div>';
+  });
+  if (errors.length) errors.forEach(function(e) { html += '<div class="multi-err">' + e + '</div>'; });
+  document.getElementById('tiroMultiList').innerHTML = html;
+  document.getElementById('tiroMultiTotal').innerHTML = '<span style="color:var(--orange);">Total minhas: ' + totalMinhas + '</span><span style="color:var(--blue);">Total clube: ' + totalClube + '</span>';
+  document.getElementById('tiroMultiOv').classList.add('show');
+}
+function closeTiroMultiModal() { document.getElementById('tiroMultiOv').classList.remove('show'); pendingTiroMulti = null; }
+function confirmTiroMultiImport() {
+  if (!pendingTiroMulti || !pendingTiroMulti.length) return;
+  var t = DATA.hobbies.tirohp;
+  pendingTiroMulti.forEach(function(p) {
+    var entry = {
+      id: tiroNextId(t.habitualidades),
+      data: p.data, tipo: p.tipo, munMinhas: p.munMinhas, munClube: p.munClube, armas: p.armaIds, obs: p.obs
+    };
+    if (p.semDesc) entry.semDesconto = true;
+    t.habitualidades.push(entry);
+  });
+  saveData();
   document.getElementById('tiro-import-input').value = '';
-
-  // Scroll to form and highlight it
-  var formCard = dataInput ? dataInput.closest('.section') : null;
-  if (formCard) {
-    formCard.style.transition = 'box-shadow .3s';
-    formCard.style.boxShadow = '0 0 0 2px var(--purple)';
-    setTimeout(function() { formCard.style.boxShadow = ''; }, 1500);
-    formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  closeTiroMultiModal();
+  renderTiroHabitualidade();
 }
 
 // ========== CONFIG ==========
